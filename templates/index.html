@@ -1,0 +1,112 @@
+<html>
+  <head>
+    <title>imdex</title>
+    <style>
+      * {
+        font-family: sans-serif;
+        background: black;
+        color: gray;
+        margin: 1em;
+        text-align: center;
+        }
+      h1 {
+        margin: .3em;
+        }
+      input {
+        border: solid black 1px;
+        font-size: 1em;
+        width: 200px;
+        background: #eee;
+        color: black;
+        padding: .6em;
+        }
+      img {
+        width: 90px;
+        height: 90px;
+      }
+      img.loading {
+        display: none;
+        width: 0px;
+        margin: 0px;
+        padding: 0px;
+      }
+      img.loaded {
+        display: none;
+      }
+      a.container {
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <h1>imdex</h1>
+    <input type="text" placeholder="reddit user" name="username" id="username"/>
+    <p id="output"></p>
+  </body>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+  <script type="text/javascript">
+  var box = $('#username');
+  var output = $('#output');
+  function getUser(user) {
+    if (user !== null && user !== "") {
+      var address = "/find/"+encodeURIComponent(user);
+      $.get(address)
+      .done(function(data) {
+        var list = "";
+
+        if(data.images.length > 0) {
+          for (var i = 0; i < data.images.length; i++) {
+            list += '<a class="container" href="'+data.images[i].url+'"><img class="loading" src="'+data.images[i].thumbnail+'"/></a>';
+          }
+        }
+        else
+        {
+          list = "Couldn't find that one...";
+        }
+
+        output.html(list);
+        $("img.loading").load(function() {
+          var image = $(this);
+          if (image.attr("width") == image.attr("height")) {
+            $(this).addClass("loaded").removeClass("loading").fadeIn("slow");
+          } else {
+            $(this).remove();
+          }
+        });
+        $("img.loading").error(function() { $(this).remove() });
+      })
+      .fail(function(data) {
+        output.html("Try again later.")
+      });
+    }
+  }
+
+  function refreshPage() {
+    var curUser = decodeURIComponent(window.location.hash.slice(1));
+    if (curUser && curUser !== "") {
+      getUser(curUser);
+      box.val(curUser)
+    }
+  }
+
+  $(function () {
+    refreshPage()
+
+    var timeout = null;
+
+    box.change(function() {
+      if(timeout) clearTimeout(timeout);
+      $("img").fadeOut("slow");
+      timeout = setTimeout(function() {
+        var search = box.val();
+        getUser(search);
+        window.location.hash = encodeURIComponent(search);
+      }, 500);
+    });
+
+    $(window).on('hashchange', refreshPage);
+  });
+  </script>
+</html>
