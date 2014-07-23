@@ -47,34 +47,45 @@
   </body>
   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
   <script type="text/javascript">
+
   var box = $('#username');
   var output = $('#output');
+
+  function createSetupFunction(id, loadedImage) {
+    return function() {
+      var imageTarget = $("#"+id);
+      if (loadedImage.width == loadedImage.height) {
+        imageTarget.attr("src", loadedImage.src)
+          .addClass("loaded")
+          .removeClass("loading")
+          .fadeIn("slow");
+      } else {
+        imageTarget.remove();
+      }
+    }
+  }
+
   function getUser(user) {
     if (user !== null && user !== "") {
       var address = "/find/"+encodeURIComponent(user);
       $.get(address)
       .done(function(data) {
-        var list = "";
+        var imageKeys = Object.keys(data.images);
+        if(imageKeys.length > 0) {
+          for (var i = 0; i < imageKeys.length; i++) {
+            var source = data.images[imageKeys[i]];
+            img = new Image();
+            img.src = source.thumbnail;
 
-        if(data.images.length > 0) {
-          for (var i = 0; i < data.images.length; i++) {
-            list += '<a class="container" href="'+data.images[i].url+'"><img class="loading" src="'+data.images[i].thumbnail+'"/></a>';
+            output.append('<a class="container" href="'+source.url+'"><img class="loading" id="'+source.id+'"/></a>');
+            $(img).load(createSetupFunction(source.id, img));
           }
         }
         else
         {
-          list = "Couldn't find that one...";
+          output.html("Couldn't find that one...");
         }
 
-        output.html(list);
-        $("img.loading").load(function() {
-          var image = $(this);
-          if (image.attr("width") == image.attr("height")) {
-            $(this).addClass("loaded").removeClass("loading").fadeIn("slow");
-          } else {
-            $(this).remove();
-          }
-        });
         $("img.loading").error(function() { $(this).remove() });
       })
       .fail(function(data) {
@@ -92,21 +103,17 @@
   }
 
   $(function () {
-    refreshPage()
-
-    var timeout = null;
-
-    box.change(function() {
-      if(timeout) clearTimeout(timeout);
-      $("img").fadeOut("slow");
-      timeout = setTimeout(function() {
-        var search = box.val();
-        getUser(search);
-        window.location.hash = encodeURIComponent(search);
-      }, 500);
-    });
+    refreshPage();
 
     $(window).on('hashchange', refreshPage);
+
+    box.change(function() {
+      output.fadeOut("slow", function() {
+        output.html("");
+        window.location.hash = encodeURIComponent(box.val());
+      }).fadeIn("slow");
+    });
   });
+
   </script>
 </html>

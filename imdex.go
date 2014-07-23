@@ -12,13 +12,14 @@ import (
 )
 
 type Image struct {
+	Id string `json:"id"`
 	Thumbnail string `json:"thumbnail"`
 	Url string `json:"url"`
 }
 
 type Result struct {
 	Name string 	`json:"name"`
-	Images []Image	`json:"images"`
+	Images map[string]Image	`json:"images"`
 }
 
 type Child struct {
@@ -48,6 +49,7 @@ func main() {
 	}))
 
 	m.Use(martini.Static("js"))
+	m.Use(martini.Static("images"))
 
 	m.Get("/", func(r render.Render) {
 		r.HTML(200, "index", "reddit user name")
@@ -70,12 +72,12 @@ func main() {
 	m.Run()
 }
 
-func getGallery(user string) []Image {
+func getGallery(user string) map[string]Image {
 	children := getChildren(user)
 
-	images := []Image{}
+	images := make(map[string]Image)
 	for img := range makeImages(makeUrls(getChildUrls(children))) {
-		images = append(images, img)
+		images[img.Id] = img
 	}
 
 	return images
@@ -95,7 +97,6 @@ func getChildren(user string) []Child {
 			dec := json.NewDecoder(list.Body)
 			if decerr := dec.Decode(&l); decerr == nil {
 				output = append(output, l.Children...)
-				fmt.Println("Got", len(l.Children), "children from", address)
 			}
 			list.Body.Close()
 		}
@@ -152,6 +153,7 @@ func toImage(value url.URL) Image {
 	img := strings.Replace(parts[len(parts)-1], ".jpg", "", -1)
 
 	return Image{
+		img,
 		fmt.Sprintf("http://i.imgur.com/%vs.jpg", img),
 		fmt.Sprintf("http://imgur.com/%v", img),
 	}
