@@ -18,10 +18,10 @@ function createSetupFunction(id, loadedImage) {
 function getUser(user) {
   if (user !== null && user !== "") {
     var address = "/find/"+encodeURIComponent(user);
-    output.html("Loading .");
+    output.html("");
 
     var interval = setInterval(function() {
-      output.append(" .");
+      output.append(".");
       $("img.loading").each(function(){
         if ($(this).attr("src") === null || $(this).attr("src") === "" ) {
           $(this).attr("src", "loading.gif");
@@ -73,5 +73,11 @@ $(function () {
 
   box.change(function() {
     window.location.hash = encodeURIComponent(box.val());
+  });
+
+  box.keypress(function(e) {
+    if(e.which == 13) {
+      window.location.hash = encodeURIComponent(box.val());
+    }
   });
 });

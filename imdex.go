@@ -11,7 +11,7 @@ import (
 )
 
 type Image struct {
-	Host			string `json:"host"`
+	Host      string `json:"host"`
 	Id        string `json:"id"`
 	Thumbnail string `json:"thumbnail"`
 	Url       string `json:"url"`
@@ -88,6 +88,7 @@ func getChildren(user string) []Child {
 	urls := []string{
 		"http://www.reddit.com/user/" + user + "/comments.json",
 		"http://www.reddit.com/user/" + user + "/submitted.json",
+		"http://www.reddit.com/user/" + user + ".json",
 	}
 
 	for _, address := range urls {
@@ -128,30 +129,12 @@ func fieldsToUrls(input <-chan string) <-chan url.URL {
 	out := make(chan url.URL)
 	go func() {
 		for value := range input {
-			if imgUrl, err := url.Parse(value); err == nil {
+			if imgUrl, err := url.Parse(value); err == nil && imgUrl.Scheme != "" {
 				out <- *imgUrl
 			}
 		}
 		close(out)
 	}()
-	return out
-}
-
-func urlsToImageTargets(input <-chan url.URL) <-chan url.URL {
-	out := make(chan url.URL)
-
-	go func() {
-		for value := range input {
-			if strings.Contains(value.Host, "imgur.com/a/") {
-				for _, extracted := range albumToImages(value) {
-					out <- extracted
-				}
-			}
-			out <- value
-		}
-		close(out)
-	}()
-
 	return out
 }
 
