@@ -33,13 +33,10 @@ func albumToImages(loc url.URL) []url.URL {
     dec := json.NewDecoder(list.Body)
     if decerr := dec.Decode(&a); decerr == nil {
       for _, image := range a.Data.Images {
-        fmt.Println("[debug] got", image, "from album")
         if link, err := url.Parse(image.Link); err == nil {
           output = append(output, *link)
         }
       }
-    } else {
-      fmt.Println("[error]", decerr)
     }
     list.Body.Close()
   }
