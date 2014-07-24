@@ -1,33 +1,33 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/render"
 	"net/http"
 	"net/url"
-	"encoding/json"
 	"strings"
 	"unicode"
-	"fmt"
 )
 
 type Image struct {
-	Id string `json:"id"`
+	Host			string `json:"host"`
+	Id        string `json:"id"`
 	Thumbnail string `json:"thumbnail"`
-	Url string `json:"url"`
+	Url       string `json:"url"`
 }
 
 type Result struct {
-	Name string 	`json:"name"`
-	Images map[string]Image	`json:"images"`
+	Name   string           `json:"name"`
+	Images map[string]Image `json:"images"`
 }
 
 type Child struct {
 	Data struct {
 		Domain string `json:"domain"`
-		Url string `json:"url"`
-		Over18 bool `json:"over_18"`
-		Body string `json:"body"`
+		Url    string `json:"url"`
+		Over18 bool   `json:"over_18"`
+		Body   string `json:"body"`
 	} `json:"data"`
 }
 
@@ -76,7 +76,7 @@ func getGallery(user string) map[string]Image {
 	children := getChildren(user)
 
 	images := make(map[string]Image)
-	for img := range makeImages(makeUrls(getChildUrls(children))) {
+	for img := range makeImages(fieldsToUrls(childrenToFields(children))) {
 		images[img.Id] = img
 	}
 
@@ -86,8 +86,8 @@ func getGallery(user string) map[string]Image {
 func getChildren(user string) []Child {
 	output := make([]Child, 100)
 	urls := []string{
-		"http://www.reddit.com/user/"+user+"/comments.json",
-		"http://www.reddit.com/user/"+user+"/submitted.json",
+		"http://www.reddit.com/user/" + user + "/comments.json",
+		"http://www.reddit.com/user/" + user + "/submitted.json",
 	}
 
 	for _, address := range urls {
@@ -102,21 +102,21 @@ func getChildren(user string) []Child {
 		}
 	}
 
-	return output;
+	return output
 }
 
-func getChildUrls(subs []Child) <-chan string {
+func childrenToFields(subs []Child) <-chan string {
 	out := make(chan string)
 	go func() {
 		for _, sub := range subs {
-			out<-sub.Data.Url
+			out <- sub.Data.Url
 
 			fields := strings.FieldsFunc(sub.Data.Body, func(c rune) bool {
 				return unicode.IsSpace(c) || strings.ContainsRune("[]()", c)
 			})
 
 			for _, field := range fields {
-				out<-field
+				out <- field
 			}
 		}
 		close(out)
@@ -124,16 +124,34 @@ func getChildUrls(subs []Child) <-chan string {
 	return out
 }
 
-func makeUrls(input <-chan string) <-chan url.URL {
+func fieldsToUrls(input <-chan string) <-chan url.URL {
 	out := make(chan url.URL)
 	go func() {
 		for value := range input {
-			if imgUrl, err := url.Parse(value); err == nil && strings.Contains(imgUrl.Host, "imgur.com") {
-				out<-*imgUrl
+			if imgUrl, err := url.Parse(value); err == nil {
+				out <- *imgUrl
 			}
 		}
 		close(out)
 	}()
+	return out
+}
+
+func urlsToImageTargets(input <-chan url.URL) <-chan url.URL {
+	out := make(chan url.URL)
+
+	go func() {
+		for value := range input {
+			if strings.Contains(value.Host, "imgur.com/a/") {
+				for _, extracted := range albumToImages(value) {
+					out <- extracted
+				}
+			}
+			out <- value
+		}
+		close(out)
+	}()
+
 	return out
 }
 
@@ -141,20 +159,14 @@ func makeImages(input <-chan url.URL) <-chan Image {
 	out := make(chan Image)
 	go func() {
 		for value := range input {
-			out<-toImage(value)
+			if strings.Contains(value.Path, "/a/") {
+				for _, img := range albumToImages(value) {
+					out <- imgurToImage(img)
+				}
+			}
+			out <- imgurToImage(value)
 		}
 		close(out)
 	}()
 	return out
-}
-
-func toImage(value url.URL) Image {
-	parts := strings.Split(value.Path, "/")
-	img := strings.Replace(parts[len(parts)-1], ".jpg", "", -1)
-
-	return Image{
-		img,
-		fmt.Sprintf("http://i.imgur.com/%vs.jpg", img),
-		fmt.Sprintf("http://imgur.com/%v", img),
-	}
 }

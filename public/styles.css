@@ -1,0 +1,41 @@
+* {
+  font-family: sans-serif;
+  background: black;
+  color: gray;
+  margin: 1em;
+  text-align: center;
+}
+
+h1 {
+  margin: .3em;
+}
+
+input {
+  border: solid black 1px;
+  font-size: 1em;
+  width: 200px;
+  background: #eee;
+  color: black;
+  padding: .6em;
+}
+
+img {
+  width: 90px;
+  height: 90px;
+}
+
+img.loading {
+  display: none;
+  width: 0px;
+  margin: 0px;
+  padding: 0px;
+}
+
+img.loaded {
+  display: none;
+}
+
+a.container {
+  margin: 0px;
+  padding: 0px;
+}
