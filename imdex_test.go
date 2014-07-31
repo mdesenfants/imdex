@@ -34,8 +34,7 @@ func TestGetAlbum(t *testing.T) {
 	close(urlc)
 
 	count := 0
-	for image := range GetImages(urlc) {
-		fmt.Println(image)
+	for _ = range GetImages(urlc) {
 		count++
 	}
 

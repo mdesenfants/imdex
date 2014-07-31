@@ -42,7 +42,8 @@ func GetImages(urls <-chan *url.URL) <-chan *Image {
 }
 
 func getAlbumImages(u *url.URL) <-chan *Image {
-	images := make(chan *url.URL)
+	links := make(chan *url.URL)
+	images := make(chan *Image)
 	id := getImgurID(u)
 
 	// Mashape client
@@ -61,15 +62,22 @@ func getAlbumImages(u *url.URL) <-chan *Image {
 			go func() {
 				for _, image := range a.Data.Images {
 					if link, err := url.Parse(image.Link); err == nil {
-						images <- link
+						links <- link
 					}
 				}
-				close(images)
+				close(links)
 			}()
 		}
 	}
 
-	return GetImages(images)
+	go func() {
+		for l := range links {
+			images <- getImage(l)
+		}
+		close(images)
+	}()
+
+	return images
 }
 
 func getGalleryImages(u *url.URL) <-chan *Image {
