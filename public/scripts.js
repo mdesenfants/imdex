@@ -1,5 +1,6 @@
-var box = $('#username');
-var output = $('#output');
+var box = null;
+var output = null;
+var status = null;
 
 function createSetupFunction(id, loadedImage) {
   return function() {
@@ -18,10 +19,27 @@ function createSetupFunction(id, loadedImage) {
 function getUser(user) {
   if (user !== null && user !== "") {
     var address = "/find/"+encodeURIComponent(user);
-    output.html("");
+    output.html("-")
 
     var interval = setInterval(function() {
-      output.append(".");
+      switch(output.html()) {
+        case "-":
+          output.html("\\");
+          break;
+        case "\\":
+          output.html("|");
+          break;
+        case "|":
+          output.html("/");
+          break;
+        case "/":
+          output.html("-");
+          break;
+        default:
+          output.html("-");
+          break;
+      }
+
       $("img.loading").each(function(){
         if ($(this).attr("src") === null || $(this).attr("src") === "" ) {
           $(this).attr("src", "loading.gif");
@@ -68,6 +86,9 @@ function refreshPage() {
 }
 
 $(function () {
+  box = $('#username');
+  output = $('#output');
+
   refreshPage();
 
   $(window).on('hashchange', refreshPage);
