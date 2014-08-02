@@ -20,8 +20,7 @@ input {
 }
 
 img {
-  width: 90px;
-  height: 90px;
+  height: 30%;
 }
 
 img.loading {

@@ -33,7 +33,7 @@ func GetImages(urls <-chan *url.URL) <-chan *Image {
 						output <- val
 					}
 				case "gallery":
-					for val := range getGalleryImages(u) {
+					for val := range getAlbumImages(u) {
 						output <- val
 					}
 				default:
@@ -90,20 +90,13 @@ func getAlbumImages(u *url.URL) <-chan *Image {
 	return images
 }
 
-func getGalleryImages(u *url.URL) <-chan *Image {
-	images := make(chan *Image)
-
-	close(images)
-	return images
-}
-
 func getImage(u *url.URL) *Image {
 	imgID := getImgurID(u)
 
 	image := &Image{
 		"imgur.com",
 		imgID,
-		fmt.Sprintf("http://i.imgur.com/%vs.jpg", imgID),
+		fmt.Sprintf("http://i.imgur.com/%vm.jpg", imgID),
 		fmt.Sprintf("http://imgur.com/%v", imgID),
 		true,
 	}

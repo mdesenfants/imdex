@@ -80,7 +80,7 @@ func main() {
 		var ok bool
 
 		if result, ok = UserCache[user]; !ok {
-			result = &Result{user, getGallery(user)}
+			result = &Result{user, getUser(user)}
 			UserCache[user] = result
 		}
 
@@ -104,7 +104,7 @@ func setup() {
 	}
 }
 
-func getGallery(user string) map[string]*Image {
+func getUser(user string) map[string]*Image {
 	children := getChildren(user)
 	fields := childrenToFields(children)
 	URLs := fieldsToURLs(fields)

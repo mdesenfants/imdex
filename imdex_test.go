@@ -10,6 +10,7 @@ var directImage, _ = url.Parse("http://i.imgur.com/T37Gba0.gif")
 var imagePage, _ = url.Parse("http://imgur.com/T37Gba0")
 var unsupported, _ = url.Parse("http://unsupported")
 var album, _ = url.Parse("http://imgur.com/a/HTxXk")
+var gallery, _ = url.Parse("http://imgur.com/gallery/acXV0")
 var user = "awildsketchappeared"
 
 func TestGetImages(t *testing.T) {
@@ -30,6 +31,8 @@ func TestGetImages(t *testing.T) {
 
 func TestGetAlbum(t *testing.T) {
 	setup()
+
+	// album
 	urlc := make(chan *url.URL, 1)
 	urlc <- album
 	close(urlc)
@@ -41,6 +44,20 @@ func TestGetAlbum(t *testing.T) {
 
 	if count != 23 {
 		t.Error(fmt.Sprintf("Found %v image(s); expected 23.", count))
+	}
+
+	// gallery
+	urlc = make(chan *url.URL, 1)
+	urlc <- gallery
+	close(urlc)
+
+	count = 0
+	for _ = range GetImages(urlc) {
+		count++
+	}
+
+	if count != 36 {
+		t.Error(fmt.Sprintf("Found %v image(s); expected 36.", count))
 	}
 }
 
@@ -86,8 +103,8 @@ func TestFieldsToURLs(t *testing.T) {
 	}
 }
 
-func TestGetGallery(t *testing.T) {
-	results := getGallery(user)
+func TestGetUser(t *testing.T) {
+	results := getUser(user)
 
 	count := len(results)
 	if count < 10 {

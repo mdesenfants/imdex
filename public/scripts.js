@@ -5,14 +5,10 @@ var status = null;
 function createSetupFunction(id, loadedImage) {
   return function() {
     var imageTarget = $("#"+id);
-    if (loadedImage.width == loadedImage.height) {
       imageTarget.attr("src", loadedImage.src)
         .addClass("loaded")
         .removeClass("loading")
         .fadeIn("slow");
-    } else {
-      imageTarget.remove();
-    }
   }
 }
 
