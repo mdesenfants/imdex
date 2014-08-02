@@ -53,7 +53,8 @@ function getUser(user) {
       $("img.loading").error(function() { $(this).remove() });
     })
     .fail(function(data) {
-      output.html("Try again later.")
+      clearInterval(interval);
+      output.html("Try again later.");
     });
   }
 }

@@ -3,11 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"net/url"
 	"os"
-	"strings"
-	"unicode"
 
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/render"
@@ -19,6 +15,7 @@ type Image struct {
 	ID        string `json:"id"`
 	Thumbnail string `json:"thumbnail"`
 	URL       string `json:"url"`
+	SFW       bool   `json:"sfw"`
 }
 
 // A Result is a list of images for a user
@@ -118,59 +115,4 @@ func getGallery(user string) map[string]*Image {
 	}
 
 	return images
-}
-
-func getChildren(user string) []Child {
-	output := make([]Child, 100)
-	urls := []string{
-		"http://www.reddit.com/user/" + user + "/comments.json",
-		"http://www.reddit.com/user/" + user + "/submitted.json",
-		"http://www.reddit.com/user/" + user + ".json",
-	}
-
-	for _, address := range urls {
-		list, err := http.Get(address)
-		if err == nil {
-			var l Listing
-			dec := json.NewDecoder(list.Body)
-			if decerr := dec.Decode(&l); decerr == nil {
-				output = append(output, l.Children...)
-			}
-			list.Body.Close()
-		}
-	}
-
-	return output
-}
-
-func childrenToFields(subs []Child) <-chan string {
-	out := make(chan string)
-	go func() {
-		for _, sub := range subs {
-			out <- sub.Data.URL
-
-			fields := strings.FieldsFunc(sub.Data.Body, func(c rune) bool {
-				return unicode.IsSpace(c) || strings.ContainsRune("[]()", c)
-			})
-
-			for _, field := range fields {
-				out <- field
-			}
-		}
-		close(out)
-	}()
-	return out
-}
-
-func fieldsToURLs(input <-chan string) <-chan *url.URL {
-	out := make(chan *url.URL)
-	go func() {
-		for value := range input {
-			if imgURL, err := url.Parse(value); err == nil && imgURL.Scheme != "" {
-				out <- imgURL
-			}
-		}
-		close(out)
-	}()
-	return out
 }
