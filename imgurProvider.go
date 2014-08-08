@@ -38,6 +38,14 @@ func (prov *ImgurProvider) GetImages(urls <-chan *url.URL) <-chan *Image {
 		for u := range urls {
 			if strings.Contains(u.Host, "imgur.com") {
 
+				id := getImgurID(u)
+				if images := singleCache.Retrieve(id); images != nil {
+					for _, val := range images {
+						output <- val
+					}
+					continue
+				}
+
 				directory := strings.Split(u.Path, "/")[1]
 
 				switch directory {
@@ -156,5 +164,9 @@ func (cache *ImgurCache) Retrieve(key string) []*Image {
 	}
 	cache.Unlock()
 
-	return cache.cache[key]
+	cache.RLock()
+	value := cache.cache[key]
+	cache.RUnlock()
+
+	return value
 }

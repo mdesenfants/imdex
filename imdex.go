@@ -3,7 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
+	"sync"
 
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/render"
@@ -30,14 +32,46 @@ type Settings struct {
 	MashapeKey    string `json:"mashapeKey"`
 }
 
-// UserCache contains all the information gathered about requests so far
-var UserCache = make(map[string]*Result)
+// LinkCache stores the retrieved urls for a user
+type LinkCache struct {
+	sync.RWMutex
+	cache map[string][]*url.URL
+}
+
+// Store keeps a value in the linkCache
+func (cache *LinkCache) Store(key string, urls ...*url.URL) {
+	cache.Lock()
+	if cache.cache == nil {
+		cache.cache = make(map[string][]*url.URL)
+	}
+
+	if urls != nil {
+		cache.cache[key] = append(cache.cache[key], urls...)
+	}
+	cache.Unlock()
+}
+
+// Retrieve gets an item from the linkCache or nil
+func (cache *LinkCache) Retrieve(key string) []*url.URL {
+	cache.Lock()
+	if cache.cache == nil {
+		cache.cache = make(map[string][]*url.URL)
+	}
+	cache.Unlock()
+
+	cache.RLock()
+	value := cache.cache[key]
+	cache.RUnlock()
+
+	return value
+}
 
 // Environment contains all the runtime info
 var Environment Settings
 
 var reddit RedditProvider
 var imgur ImgurProvider
+var linkCache LinkCache
 
 // main runs the server
 func main() {
@@ -58,15 +92,7 @@ func main() {
 
 	m.Get("/find/:user", func(r render.Render, p martini.Params) {
 		user := p["user"]
-
-		var result *Result
-		var ok bool
-
-		if result, ok = UserCache[user]; !ok {
-			result = &Result{user, getUser(user)}
-			UserCache[user] = result
-		}
-
+		result := &Result{user, getUser(user)}
 		r.JSON(200, *result)
 	})
 
@@ -88,14 +114,45 @@ func setup() {
 }
 
 func getUser(user string) map[string]*Image {
-	children := getChildren(user)
-	fields := childrenToFields(children)
-	URLs := reddit.GetURLs(fields)
+	URLs := make(chan *url.URL)
+
+	if values := linkCache.Retrieve(user); values != nil {
+		go func() {
+			for _, value := range values {
+				URLs <- value
+			}
+			close(URLs)
+		}()
+	} else {
+		children := getChildren(user)
+		fields := childrenToFields(children)
+
+		go func() {
+			for value := range reddit.GetURLs(fields) {
+				URLs <- value
+			}
+			close(URLs)
+		}()
+	}
 
 	images := make(map[string]*Image)
-	for img := range imgur.GetImages(URLs) {
+	for img := range imgur.GetImages(cacheURLs(user, URLs)) {
 		images[img.ID] = img
 	}
 
 	return images
+}
+
+func cacheURLs(user string, u <-chan *url.URL) <-chan *url.URL {
+	output := make(chan *url.URL)
+	go func() {
+		for val := range u {
+			linkCache.Store(user, val)
+			output <- val
+		}
+
+		close(output)
+	}()
+
+	return output
 }

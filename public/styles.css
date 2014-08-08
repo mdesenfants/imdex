@@ -19,13 +19,19 @@ input {
   padding: .6em;
 }
 
+.output {
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 .resultBox {
     margin-left: auto;
     margin-right: auto;
     height: 15em;
     width: 15em;
     float: left;
-    display: none;
+    display: inline-block;
 }
 
 .imgBox {

@@ -9,8 +9,7 @@ import (
 )
 
 // RedditProvider returns image links given a context
-type RedditProvider struct {
-}
+type RedditProvider struct {}
 
 // A Child is a reddit structure with information about a post
 type Child struct {
