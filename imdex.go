@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"net/url"
 	"os"
@@ -53,14 +54,15 @@ func (cache *LinkCache) Store(key string, urls ...*url.URL) {
 
 // Retrieve gets an item from the linkCache or nil
 func (cache *LinkCache) Retrieve(key string) []*url.URL {
-	cache.Lock()
-	if cache.cache == nil {
-		cache.cache = make(map[string][]*url.URL)
-	}
-	cache.Unlock()
+	var value []*url.URL
 
 	cache.RLock()
-	value := cache.cache[key]
+	if cache.cache == nil {
+		value = nil
+	}
+
+	value = cache.cache[key]
+
 	cache.RUnlock()
 
 	return value
@@ -72,6 +74,8 @@ var Environment Settings
 var reddit RedditProvider
 var imgur ImgurProvider
 var linkCache LinkCache
+
+var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
 // main runs the server
 func main() {
@@ -117,6 +121,7 @@ func getUser(user string) map[string]*Image {
 	URLs := make(chan *url.URL)
 
 	if values := linkCache.Retrieve(user); values != nil {
+		fmt.Println("Cache hit for", user, "with", len(values), "URLs.")
 		go func() {
 			for _, value := range values {
 				URLs <- value
@@ -128,7 +133,7 @@ func getUser(user string) map[string]*Image {
 		fields := childrenToFields(children)
 
 		go func() {
-			for value := range reddit.GetURLs(fields) {
+			for value := range cacheURLs(user, reddit.GetURLs(fields)) {
 				URLs <- value
 			}
 			close(URLs)
@@ -136,7 +141,7 @@ func getUser(user string) map[string]*Image {
 	}
 
 	images := make(map[string]*Image)
-	for img := range imgur.GetImages(cacheURLs(user, URLs)) {
+	for img := range imgur.GetImages(URLs) {
 		images[img.ID] = img
 	}
 

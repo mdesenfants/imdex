@@ -158,14 +158,13 @@ func (cache *ImgurCache) Store(key string, images ...*Image) {
 
 // Retrieve gets an item from the ImgurCache or nil
 func (cache *ImgurCache) Retrieve(key string) []*Image {
-	cache.Lock()
-	if cache.cache == nil {
-		cache.cache = make(map[string][]*Image)
-	}
-	cache.Unlock()
+	var value []*Image
 
 	cache.RLock()
-	value := cache.cache[key]
+	if cache.cache == nil {
+		value = nil
+	}
+	value = cache.cache[key]
 	cache.RUnlock()
 
 	return value
