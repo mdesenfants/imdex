@@ -8,6 +8,30 @@ import (
 	"unicode"
 )
 
+// RedditProvider returns image links given a context
+type RedditProvider struct {
+}
+
+// A Child is a reddit structure with information about a post
+type Child struct {
+	Data struct {
+		Domain string `json:"domain"`
+		URL    string `json:"url"`
+		Over18 bool   `json:"over_18"`
+		Body   string `json:"body"`
+	} `json:"data"`
+}
+
+// ListingData is a collection of Children
+type ListingData struct {
+	Children []Child `json:"children"`
+}
+
+// Listing is a reddit listing of posts
+type Listing struct {
+	ListingData `json:"data"`
+}
+
 func getChildren(user string) <-chan Child {
 	output := make(chan Child)
 
@@ -65,7 +89,7 @@ func childrenToFields(subs <-chan Child) <-chan string {
 	return out
 }
 
-func fieldsToURLs(input <-chan string) <-chan *url.URL {
+func (red RedditProvider) GetURLs(input <-chan string) <-chan *url.URL {
 	out := make(chan *url.URL)
 	go func() {
 		for value := range input {

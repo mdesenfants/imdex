@@ -6,7 +6,19 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 )
+
+// ImgurCache stores commonly-retrieved images
+type ImgurCache struct {
+	sync.RWMutex
+	cache map[string][]*Image
+}
+
+var singleCache = ImgurCache{}
+
+// ImgurProvider provides images from URLs
+type ImgurProvider struct{}
 
 type imgurImage struct {
 	Link string `json:"link"`
@@ -19,12 +31,13 @@ type imgurAlbum struct {
 }
 
 // GetImages produces a channel of imgur images
-func GetImages(urls <-chan *url.URL) <-chan *Image {
+func (prov *ImgurProvider) GetImages(urls <-chan *url.URL) <-chan *Image {
 	output := make(chan *Image)
 
 	go func() {
 		for u := range urls {
 			if strings.Contains(u.Host, "imgur.com") {
+
 				directory := strings.Split(u.Path, "/")[1]
 
 				switch directory {
@@ -48,9 +61,20 @@ func GetImages(urls <-chan *url.URL) <-chan *Image {
 }
 
 func getAlbumImages(u *url.URL) <-chan *Image {
-	links := make(chan *url.URL)
-	images := make(chan *Image)
 	id := getImgurID(u)
+	images := make(chan *Image)
+
+	if lister := singleCache.Retrieve(id); lister != nil {
+		go func() {
+			for _, image := range lister {
+				images <- image
+			}
+			close(images)
+		}()
+		return images
+	}
+
+	links := make(chan *url.URL)
 
 	// Mashape client
 	client := &http.Client{}
@@ -101,10 +125,36 @@ func getImage(u *url.URL) *Image {
 		true,
 	}
 
+	singleCache.Store(imgID, image)
+
 	return image
 }
 
 func getImgurID(value *url.URL) string {
 	parts := strings.Split(value.Path, "/")
 	return strings.Replace(parts[len(parts)-1], ".jpg", "", -1)
+}
+
+// Store keeps a value in the cache
+func (cache *ImgurCache) Store(key string, images ...*Image) {
+	cache.Lock()
+	if cache.cache == nil {
+		cache.cache = make(map[string][]*Image)
+	}
+
+	if images != nil {
+		cache.cache[key] = images
+	}
+	cache.Unlock()
+}
+
+// Retrieve gets an item from the ImgurCache or nil
+func (cache *ImgurCache) Retrieve(key string) []*Image {
+	cache.Lock()
+	if cache.cache == nil {
+		cache.cache = make(map[string][]*Image)
+	}
+	cache.Unlock()
+
+	return cache.cache[key]
 }

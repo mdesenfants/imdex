@@ -20,7 +20,7 @@ func TestGetImages(t *testing.T) {
 	close(urlc)
 
 	count := 0
-	for _ = range GetImages(urlc) {
+	for _ = range imgur.GetImages(urlc) {
 		count++
 	}
 
@@ -38,7 +38,7 @@ func TestGetAlbum(t *testing.T) {
 	close(urlc)
 
 	count := 0
-	for _ = range GetImages(urlc) {
+	for _ = range imgur.GetImages(urlc) {
 		count++
 	}
 
@@ -52,7 +52,7 @@ func TestGetAlbum(t *testing.T) {
 	close(urlc)
 
 	count = 0
-	for _ = range GetImages(urlc) {
+	for _ = range imgur.GetImages(urlc) {
 		count++
 	}
 
@@ -91,7 +91,7 @@ func TestChildrenToFields(t *testing.T) {
 func TestFieldsToURLs(t *testing.T) {
 	children := getChildren(user)
 	fields := childrenToFields(children)
-	urls := fieldsToURLs(fields)
+	urls := reddit.GetURLs(fields)
 
 	count := 0
 	for _ = range urls {
@@ -104,9 +104,18 @@ func TestFieldsToURLs(t *testing.T) {
 }
 
 func TestGetUser(t *testing.T) {
+	// Test cache miss
 	results := getUser(user)
 
 	count := len(results)
+	if count < 10 {
+		t.Error(fmt.Sprintf("Expected at least 10 images, got %v", count))
+	}
+
+	// Test cache hit
+	results = getUser(user)
+
+	count = len(results)
 	if count < 10 {
 		t.Error(fmt.Sprintf("Expected at least 10 images, got %v", count))
 	}

@@ -15,33 +15,13 @@ type Image struct {
 	ID        string `json:"id"`
 	Thumbnail string `json:"thumbnail"`
 	URL       string `json:"url"`
-	SFW       bool   `json:"sfw"`
+	NSFW      bool   `json:"nsfw"`
 }
 
 // A Result is a list of images for a user
 type Result struct {
 	Name   string            `json:"name"`
 	Images map[string]*Image `json:"images"`
-}
-
-// A Child is a reddit structure with information about a post
-type Child struct {
-	Data struct {
-		Domain string `json:"domain"`
-		URL    string `json:"url"`
-		Over18 bool   `json:"over_18"`
-		Body   string `json:"body"`
-	} `json:"data"`
-}
-
-// ListingData is a collection of Children
-type ListingData struct {
-	Children []Child `json:"children"`
-}
-
-// Listing is a reddit listing of posts
-type Listing struct {
-	ListingData `json:"data"`
 }
 
 // Settings contains the web app settings
@@ -55,6 +35,9 @@ var UserCache = make(map[string]*Result)
 
 // Environment contains all the runtime info
 var Environment Settings
+
+var reddit RedditProvider
+var imgur ImgurProvider
 
 // main runs the server
 func main() {
@@ -107,10 +90,10 @@ func setup() {
 func getUser(user string) map[string]*Image {
 	children := getChildren(user)
 	fields := childrenToFields(children)
-	URLs := fieldsToURLs(fields)
+	URLs := reddit.GetURLs(fields)
 
 	images := make(map[string]*Image)
-	for img := range GetImages(URLs) {
+	for img := range imgur.GetImages(URLs) {
 		images[img.ID] = img
 	}
 
