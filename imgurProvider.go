@@ -40,6 +40,7 @@ func (prov *ImgurProvider) GetImages(urls <-chan *url.URL) <-chan *Image {
 
 				id := getImgurID(u)
 				if images := singleCache.Retrieve(id); images != nil {
+					fmt.Println("Imgur cache hit for", id)
 					for _, val := range images {
 						output <- val
 					}
@@ -163,8 +164,9 @@ func (cache *ImgurCache) Retrieve(key string) []*Image {
 	cache.RLock()
 	if cache.cache == nil {
 		value = nil
+	} else {
+		value = cache.cache[key]
 	}
-	value = cache.cache[key]
 	cache.RUnlock()
 
 	return value

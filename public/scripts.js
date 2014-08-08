@@ -62,7 +62,7 @@ function getUser(user) {
 					img.src = source.thumbnail;
 
 					output.append('<div class="resultBox" id="r'+source.id+'">'+
-					'<a target="_blank" class="imgBox" href="'+source.url+'"><img class="loading" id="'+source.id+'"/></a>'+
+					'<a target="_blank" class="imgBox" href="'+source.url+'"><img id="'+source.id+'"/></a>'+
 					'</div>');
 					$(img).load(createSetupFunction(source.id, img));
 				}

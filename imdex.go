@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"net/url"
 	"os"
 	"sync"
 
@@ -33,36 +32,35 @@ type Settings struct {
 	MashapeKey    string `json:"mashapeKey"`
 }
 
-// LinkCache stores the retrieved urls for a user
-type LinkCache struct {
+// SearchCache stores the retrieved urls for a user
+type SearchCache struct {
 	sync.RWMutex
-	cache map[string][]*url.URL
+	cache map[string]map[string]*Image
 }
 
-// Store keeps a value in the linkCache
-func (cache *LinkCache) Store(key string, urls ...*url.URL) {
+// Store keeps a value in the searchCache
+func (cache *SearchCache) Store(key string, images map[string]*Image) {
 	cache.Lock()
 	if cache.cache == nil {
-		cache.cache = make(map[string][]*url.URL)
+		cache.cache = make(map[string]map[string]*Image)
 	}
 
-	if urls != nil {
-		cache.cache[key] = append(cache.cache[key], urls...)
+	if images != nil {
+		cache.cache[key] = images
 	}
 	cache.Unlock()
 }
 
-// Retrieve gets an item from the linkCache or nil
-func (cache *LinkCache) Retrieve(key string) []*url.URL {
-	var value []*url.URL
+// Retrieve gets an item from the searchCache or nil
+func (cache *SearchCache) Retrieve(key string) map[string]*Image {
+	var value map[string]*Image
 
 	cache.RLock()
 	if cache.cache == nil {
 		value = nil
+	} else {
+		value = cache.cache[key]
 	}
-
-	value = cache.cache[key]
-
 	cache.RUnlock()
 
 	return value
@@ -73,7 +71,7 @@ var Environment Settings
 
 var reddit RedditProvider
 var imgur ImgurProvider
-var linkCache LinkCache
+var searchCache SearchCache
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
@@ -118,46 +116,22 @@ func setup() {
 }
 
 func getUser(user string) map[string]*Image {
-	URLs := make(chan *url.URL)
-
-	if values := linkCache.Retrieve(user); values != nil {
-		fmt.Println("Cache hit for", user, "with", len(values), "URLs.")
-		go func() {
-			for _, value := range values {
-				URLs <- value
-			}
-			close(URLs)
-		}()
-	} else {
-		children := getChildren(user)
-		fields := childrenToFields(children)
-
-		go func() {
-			for value := range cacheURLs(user, reddit.GetURLs(fields)) {
-				URLs <- value
-			}
-			close(URLs)
-		}()
+	if value := searchCache.Retrieve(user); value != nil {
+		fmt.Println("Cache hit for", user, "with", len(value), "URLs.")
+		return value
 	}
+
+	fmt.Println("Miss for", user)
+	children := getChildren(user)
+	fields := childrenToFields(children)
+	URLs := reddit.GetURLs(fields)
 
 	images := make(map[string]*Image)
 	for img := range imgur.GetImages(URLs) {
 		images[img.ID] = img
 	}
 
+	go searchCache.Store(user, images)
+
 	return images
-}
-
-func cacheURLs(user string, u <-chan *url.URL) <-chan *url.URL {
-	output := make(chan *url.URL)
-	go func() {
-		for val := range u {
-			linkCache.Store(user, val)
-			output <- val
-		}
-
-		close(output)
-	}()
-
-	return output
 }
