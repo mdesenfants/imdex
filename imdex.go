@@ -135,6 +135,7 @@ func main() {
 		}
 
 		conn.Close()
+		fmt.Println("Closed connection.")
 	})
 
 	m.Get("/find/:user", func(r render.Render, p martini.Params) {

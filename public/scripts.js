@@ -17,9 +17,21 @@ function createSetupFunction(id, loadedImage) {
 			.show();
 
 		imageTarget.attr("src", loadedImage.src)
-			.addClass("loaded")
+			.css("margin-top", (imageTarget.parent().height()-imageTarget.height())/2)
+			.hide()
+			.css("visibility", "visible")
 			.fadeIn("slow");
 	}
+}
+
+function errorResult(interval) {
+	if (interval) clearInterval(interval);
+	progress.html("Try again later.");
+}
+
+function notFoundResult(interval) {
+	if (interval) clearInterval(interval);
+	progress.html("Couldn't find that one...");
 }
 
 function getUser(user) {
@@ -59,7 +71,7 @@ function getUser(user) {
 			socket.onopen = function(event) {
 				console.log("Using websockets.");
 				socket.send(user);
-			}
+			};
 
 			socket.onmessage = function(event) {
 				clearInterval(interval);
@@ -76,6 +88,16 @@ function getUser(user) {
 				$(img).load(createSetupFunction(source.id, img));
 				$(img).error(function() { $("#r"+source.id).remove()})
 			};
+
+			socket.onerror = function(event) {
+				errorResult(interval);
+			}
+
+			socket.onclose = function(event) {
+				if (output.children().length === 0) {
+					notFoundResult(interval);
+				}
+			}
 
 			return
 		}
@@ -105,12 +127,11 @@ function getUser(user) {
 			}
 			else
 			{
-				progress.html("Couldn't find that one...");
+				notFoundResult(null);
 			}
 		})
 		.fail(function(data) {
-			clearInterval(interval);
-			progress.html("Try again later.");
+			errorResult(null);
 		});
 	}
 }

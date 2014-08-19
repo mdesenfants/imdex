@@ -48,6 +48,7 @@ img {
     position: relative;
     left: 100%;
     margin-left: -200%;
+    visibility: hidden;
 }
 
 .loading {
