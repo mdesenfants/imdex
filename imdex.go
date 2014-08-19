@@ -4,10 +4,14 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"log"
+	"net/http"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/go-martini/martini"
+	"github.com/gorilla/websocket"
 	"github.com/martini-contrib/render"
 )
 
@@ -47,6 +51,15 @@ func (cache *SearchCache) Store(key string, images map[string]*Image) {
 
 	if images != nil {
 		cache.cache[key] = images
+
+		go func() {
+			timer := time.NewTimer(time.Minute * 10)
+			<-timer.C
+			cache.Lock()
+			delete(cache.cache, key)
+			cache.Unlock()
+			fmt.Println("Deleted", key)
+		}()
 	}
 	cache.Unlock()
 }
@@ -75,6 +88,11 @@ var searchCache SearchCache
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
+
 // main runs the server
 func main() {
 	m := martini.Classic()
@@ -90,6 +108,33 @@ func main() {
 
 	m.Get("/", func(r render.Render) {
 		r.HTML(200, "index", "reddit user name")
+	})
+
+	m.Get("/find/stream", func(w http.ResponseWriter, r *http.Request) {
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		_, p, err := conn.ReadMessage()
+		if err != nil {
+			return
+		}
+
+		user := string(p)
+
+		known := make(map[string]bool)
+
+		for result := range getUserStream(user) {
+			if _, exists := known[result.ID]; !exists {
+				jresp, _ := json.Marshal(result)
+				conn.WriteMessage(websocket.TextMessage, jresp)
+				known[result.ID] = true
+			}
+		}
+
+		conn.Close()
 	})
 
 	m.Get("/find/:user", func(r render.Render, p martini.Params) {
@@ -134,4 +179,29 @@ func getUser(user string) map[string]*Image {
 	go searchCache.Store(user, images)
 
 	return images
+}
+
+func getUserStream(user string) <-chan *Image {
+	if value := searchCache.Retrieve(user); value != nil {
+		fmt.Println("Cache hit for", user, "with", len(value), "URLs.")
+
+		imageChan := make(chan *Image)
+
+		go func() {
+			for _, img := range value {
+				imageChan <- img
+			}
+			close(imageChan)
+		}()
+
+		return imageChan
+	}
+
+	children := getChildren(user)
+	fields := childrenToFields(children)
+	URLs := reddit.GetURLs(fields)
+
+	go getUser(user)
+
+	return imgur.GetImages(URLs)
 }

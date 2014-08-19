@@ -24,7 +24,6 @@ function createSetupFunction(id, loadedImage) {
 
 function getUser(user) {
 	if (user !== null && user !== "") {
-		var address = "/find/"+encodeURIComponent(user);
 		output.html('');
 		progress.html("-").show();
 
@@ -53,6 +52,37 @@ function getUser(user) {
 				}
 			});
 		}, 200 );
+
+		if ("WebSocket" in window)
+		{
+			var socket = new WebSocket("ws://"+window.location.host+"/find/stream");
+			socket.onopen = function(event) {
+				console.log("Using websockets.");
+				socket.send(user);
+			}
+
+			socket.onmessage = function(event) {
+				clearInterval(interval);
+				progress.hide();
+
+				source = JSON.parse(event.data);
+
+				img = new Image();
+				img.src = source.thumbnail;
+
+				output.append('<div class="resultBox" id="r'+source.id+'">'+
+				'<a target="_blank" class="imgBox" href="'+source.url+'"><img id="'+source.id+'"/></a>'+
+				'</div>');
+				$(img).load(createSetupFunction(source.id, img));
+				$(img).error(function() { $("#r"+source.id).remove()})
+			};
+
+			return
+		}
+
+		var address = "/find/"+encodeURIComponent(user);
+
+		console.log("Using http.")
 
 		$.get(address)
 		.done(function(data) {

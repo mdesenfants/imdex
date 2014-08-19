@@ -51,15 +51,13 @@ func (prov *ImgurProvider) GetImages(urls <-chan *url.URL) <-chan *Image {
 
 				switch directory {
 				case "a":
-					for val := range getAlbumImages(u) {
-						output <- val
-					}
+					fallthrough
 				case "gallery":
 					for val := range getAlbumImages(u) {
 						output <- val
 					}
 				default:
-					output <- getImage(u)
+					output <- getImage(u, "")
 				}
 			}
 		}
@@ -115,8 +113,7 @@ func getAlbumImages(u *url.URL) <-chan *Image {
 
 	go func() {
 		for l := range links {
-
-			images <- getImage(l)
+			images <- getImage(l, u.String())
 		}
 		close(images)
 	}()
@@ -124,14 +121,21 @@ func getAlbumImages(u *url.URL) <-chan *Image {
 	return images
 }
 
-func getImage(u *url.URL) *Image {
+func getImage(u *url.URL, linkOverride string) *Image {
 	imgID := getImgurID(u)
+
+	var link string
+	if linkOverride != "" {
+		link = linkOverride + "#" + imgID
+	} else {
+		link = fmt.Sprintf("http://imgur.com/%v", imgID)
+	}
 
 	image := &Image{
 		"imgur.com",
 		imgID,
 		fmt.Sprintf("http://i.imgur.com/%vm.jpg", imgID),
-		fmt.Sprintf("http://imgur.com/%v", imgID),
+		link,
 		true,
 	}
 
