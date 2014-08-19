@@ -115,6 +115,7 @@ func getAlbumImages(u *url.URL) <-chan *Image {
 
 	go func() {
 		for l := range links {
+
 			images <- getImage(l)
 		}
 		close(images)
@@ -141,7 +142,7 @@ func getImage(u *url.URL) *Image {
 
 func getImgurID(value *url.URL) string {
 	parts := strings.Split(value.Path, "/")
-	return strings.Replace(parts[len(parts)-1], ".jpg", "", -1)
+	return strings.Split(parts[len(parts)-1], ".")[0]
 }
 
 // Store keeps a value in the cache

@@ -1,5 +1,6 @@
 var box = null;
 var output = null;
+var progress = null;
 var status = null;
 
 function createSetupFunction(id, loadedImage) {
@@ -10,10 +11,13 @@ function createSetupFunction(id, loadedImage) {
 		} else {
 			imageTarget.css("height", "100%")
 		}
-		$("#r"+id).show();
+
+		$("#r"+id)
+			.removeClass("loading")
+			.show();
+
 		imageTarget.attr("src", loadedImage.src)
 			.addClass("loaded")
-			.removeClass("loading")
 			.fadeIn("slow");
 	}
 }
@@ -21,24 +25,25 @@ function createSetupFunction(id, loadedImage) {
 function getUser(user) {
 	if (user !== null && user !== "") {
 		var address = "/find/"+encodeURIComponent(user);
-		output.html("-")
+		output.html('');
+		progress.html("-").show();
 
 		var interval = setInterval(function() {
-			switch(output.html()) {
+			switch(progress.html()) {
 				case "-":
-					output.html("\\");
+					progress.html("\\");
 					break;
 				case "\\":
-					output.html("|");
+					progress.html("|");
 					break;
 				case "|":
-					output.html("/");
+					progress.html("/");
 					break;
 				case "/":
-					output.html("-");
+					progress.html("-");
 					break;
 				default:
-					output.html("-");
+					progress.html("-");
 					break;
 			}
 
@@ -52,7 +57,7 @@ function getUser(user) {
 		$.get(address)
 		.done(function(data) {
 			clearInterval(interval);
-			output.html("");
+			progress.hide();
 
 			var imageKeys = Object.keys(data.images);
 			if(imageKeys.length > 0) {
@@ -65,18 +70,17 @@ function getUser(user) {
 					'<a target="_blank" class="imgBox" href="'+source.url+'"><img id="'+source.id+'"/></a>'+
 					'</div>');
 					$(img).load(createSetupFunction(source.id, img));
+					$(img).error(function() { $("#r"+source.id).remove()})
 				}
 			}
 			else
 			{
-				output.html("Couldn't find that one...");
+				progress.html("Couldn't find that one...");
 			}
-
-			$("img.loading").error(function() { $(this).remove() });
 		})
 		.fail(function(data) {
 			clearInterval(interval);
-			output.html("Try again later.");
+			progress.html("Try again later.");
 		});
 	}
 }
@@ -92,6 +96,7 @@ function refreshPage() {
 $(function () {
 	box = $('#username');
 	output = $('#output');
+	progress = $('#progress')
 
 	refreshPage();
 
