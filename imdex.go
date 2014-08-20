@@ -22,6 +22,7 @@ type Image struct {
 	Thumbnail string `json:"thumbnail"`
 	URL       string `json:"url"`
 	NSFW      bool   `json:"nsfw"`
+	Context   string `json:"context"`
 }
 
 // A Result is a list of images for a user

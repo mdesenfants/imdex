@@ -27,13 +27,18 @@ input[type="text"] {
 }
 
 input[type="checkbox"] {
+    display: inline-block;
     background: #eee;
+    margin: 2px;
+    vertical-align: middle;
 }
 
 input[type="button"] {
     background-color: rgb(200, 74, 74);
     color: black;
     padding: .5em;
+    width: 15em;
+    white-space: normal;
 }
 
 .output {
@@ -49,13 +54,27 @@ input[type="button"] {
     margin: 0 auto;
     float: left;
     display: inline-block;
-    visibility: hidden;
 }
+
+.resultBox a.context {
+    font-size: .8em;
+    text-decoration: none;
+    color: black;
+    margin: 0;
+}
+
+.resultBox a.context:hover {
+    font-size: .8em;
+    text-decoration: none;
+    margin: 0;
+}
+
 
 .imgBox {
     height: 15em;
     width: 15em;
     display: inline-block;
+    margin-bottom: .3em;
     padding: 0;
     overflow: hidden;
     text-align: center;
@@ -66,7 +85,6 @@ img {
     position: relative;
     left: 100%;
     margin-left: -200%;
-    visibility: hidden;
 }
 
 .loading {

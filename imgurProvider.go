@@ -40,17 +40,17 @@ type imgurAlbum struct {
 }
 
 // GetImages produces a channel of imgur images
-func (prov *ImgurProvider) GetImages(urls <-chan *url.URL) <-chan *Image {
+func (prov *ImgurProvider) GetImages(urls <-chan URLWithContext) <-chan *Image {
 	output := make(chan *Image)
 	var wg sync.WaitGroup
 
 	for u := range urls {
 		wg.Add(1)
-		go func(u *url.URL) {
+		go func(u URLWithContext) {
 			defer wg.Done()
 
-			if strings.Contains(u.Host, "imgur.com") {
-				id := getImgurID(u)
+			if strings.Contains(u.URL.Host, "imgur.com") {
+				id := getImgurID(u.URL)
 				if images := singleCache.Retrieve(id); images != nil {
 					fmt.Println("Imgur cache hit for", id)
 					for _, val := range images {
@@ -59,7 +59,7 @@ func (prov *ImgurProvider) GetImages(urls <-chan *url.URL) <-chan *Image {
 					return
 				}
 
-				directory := strings.Split(u.Path, "/")[1]
+				directory := strings.Split(u.URL.Path, "/")[1]
 
 				var endpoint string
 				switch directory {
@@ -72,6 +72,7 @@ func (prov *ImgurProvider) GetImages(urls <-chan *url.URL) <-chan *Image {
 				}
 
 				for val := range imgurRequest(endpoint, id) {
+					val.Context = *u.Context
 					output <- val
 				}
 			}
@@ -124,6 +125,7 @@ func imgurRequest(endpoint, id string) <-chan *Image {
 							"http://i.imgur.com/" + image.ID + "m.jpg",
 							a.Data.Link + "#" + image.ID,
 							a.Data.NSFW,
+							"",
 						}
 						images <- img
 					}
@@ -150,6 +152,7 @@ func imgurRequest(endpoint, id string) <-chan *Image {
 				"http://i.imgur.com/" + si.Image.ID + "m.jpg",
 				"http://imgur.com/" + si.Image.ID,
 				si.Image.NSFW,
+				"",
 			}
 			go singleCache.Store(img.ID, img)
 			images <- img

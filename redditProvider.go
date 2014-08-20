@@ -14,11 +14,15 @@ type RedditProvider struct{}
 
 // A Child is a reddit structure with information about a post
 type Child struct {
+	Kind string `json:"kind"`
 	Data struct {
-		Domain string `json:"domain"`
-		URL    string `json:"url"`
-		Over18 bool   `json:"over_18"`
-		Body   string `json:"body"`
+		ID        string `json:"id"`
+		Domain    string `json:"domain"`
+		URL       string `json:"url"`
+		Over18    bool   `json:"over_18"`
+		Body      string `json:"body"`
+		Permalink string `json:"permalink"`
+		LinkID    string `json:"link_id"`
 	} `json:"data"`
 }
 
@@ -32,13 +36,25 @@ type Listing struct {
 	ListingData `json:"data"`
 }
 
+// Field contains a string and the context from which it originated
+type Field struct {
+	Value   *string
+	Context *string
+}
+
+// URLWithContext contains a url pointer and the context from which it originated
+type URLWithContext struct {
+	URL     *url.URL
+	Context *string
+}
+
 func getChildren(user string) <-chan Child {
 	output := make(chan Child)
 
 	urls := []string{
-		"http://www.reddit.com/user/" + user + "/comments.json",
-		"http://www.reddit.com/user/" + user + "/submitted.json",
-		"http://www.reddit.com/user/" + user + ".json",
+		"http://www.reddit.com/user/" + user + "/comments.json?sort=top",
+		"http://www.reddit.com/user/" + user + "/submitted.json?sort=top",
+		"http://www.reddit.com/user/" + user + ".json?sort=top",
 	}
 
 	go func() {
@@ -68,12 +84,21 @@ func getChildren(user string) <-chan Child {
 	return output
 }
 
-func childrenToFields(subs <-chan Child) <-chan string {
-	out := make(chan string)
+func childrenToFields(subs <-chan Child) <-chan Field {
+	out := make(chan Field)
 	go func() {
 		for sub := range subs {
 			// pull directly from post
-			out <- sub.Data.URL
+			var context string
+			switch sub.Kind {
+			case "t3":
+				context = "http://reddit.com" + sub.Data.Permalink
+			case "t1":
+				linkID := strings.Split(sub.Data.LinkID, "_")[1]
+				context = "http://www.reddit.com/comments/" + linkID + "/_/" + sub.Data.ID + "?context=3"
+			}
+
+			out <- Field{&sub.Data.URL, &context}
 
 			// pull from comment text
 			fields := strings.FieldsFunc(sub.Data.Body, func(c rune) bool {
@@ -81,7 +106,7 @@ func childrenToFields(subs <-chan Child) <-chan string {
 			})
 
 			for _, field := range fields {
-				out <- field
+				out <- Field{&field, &context}
 			}
 		}
 		close(out)
@@ -90,16 +115,16 @@ func childrenToFields(subs <-chan Child) <-chan string {
 }
 
 // GetURLs grabs strings and parses them into urls if possible
-func (red RedditProvider) GetURLs(input <-chan string) <-chan *url.URL {
-	out := make(chan *url.URL)
+func (red RedditProvider) GetURLs(input <-chan Field) <-chan URLWithContext {
+	out := make(chan URLWithContext)
 	go func() {
 		var wg sync.WaitGroup
 		for value := range input {
 			wg.Add(1)
-			go func(value string) {
+			go func(value Field) {
 				defer wg.Done()
-				if imgURL, err := url.Parse(value); err == nil && imgURL.Scheme != "" {
-					out <- imgURL
+				if imgURL, err := url.Parse(*value.Value); err == nil && imgURL.Scheme != "" {
+					out <- URLWithContext{imgURL, value.Context}
 				}
 			}(value)
 		}
