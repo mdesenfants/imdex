@@ -21,56 +21,73 @@ var singleCache = ImgurCache{}
 type ImgurProvider struct{}
 
 type imgurImage struct {
+	ID   string `json:"id"`
 	Link string `json:"link"`
+	NSFW bool   `json:"nsfw"`
+}
+
+type singleImage struct {
+	Image imgurImage `json:"data"`
 }
 
 type imgurAlbum struct {
 	Data struct {
 		Images []imgurImage `json:"images"`
+		Link   string       `json:"link"`
+		ID     string       `json:"id"`
+		NSFW   bool         `json:"nsfw"`
 	} `json:"data"`
 }
 
 // GetImages produces a channel of imgur images
 func (prov *ImgurProvider) GetImages(urls <-chan *url.URL) <-chan *Image {
 	output := make(chan *Image)
+	var wg sync.WaitGroup
 
-	go func() {
-		for u := range urls {
+	for u := range urls {
+		wg.Add(1)
+		go func(u *url.URL) {
+			defer wg.Done()
+
 			if strings.Contains(u.Host, "imgur.com") {
-
 				id := getImgurID(u)
 				if images := singleCache.Retrieve(id); images != nil {
 					fmt.Println("Imgur cache hit for", id)
 					for _, val := range images {
 						output <- val
 					}
-					continue
+					return
 				}
 
 				directory := strings.Split(u.Path, "/")[1]
 
+				var endpoint string
 				switch directory {
 				case "a":
-					fallthrough
+					endpoint = "album"
 				case "gallery":
-					for val := range getAlbumImages(u) {
-						output <- val
-					}
+					endpoint = "gallery/album"
 				default:
-					output <- getImage(u, "")
+					endpoint = "image"
+				}
+
+				for val := range imgurRequest(endpoint, id) {
+					output <- val
 				}
 			}
-		}
+		}(u)
+	}
+
+	go func() {
+		wg.Wait()
 		close(output)
 	}()
 
 	return output
 }
 
-func getAlbumImages(u *url.URL) <-chan *Image {
-	id := getImgurID(u)
+func imgurRequest(endpoint, id string) <-chan *Image {
 	images := make(chan *Image)
-
 	if lister := singleCache.Retrieve(id); lister != nil {
 		go func() {
 			for _, image := range lister {
@@ -81,67 +98,72 @@ func getAlbumImages(u *url.URL) <-chan *Image {
 		return images
 	}
 
-	links := make(chan *url.URL)
-
-	// Mashape client
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", "https://imgur-apiv3.p.mashape.com/3/album/"+id, nil)
+
+	req, err := http.NewRequest("GET", "https://imgur-apiv3.p.mashape.com/3/"+endpoint+"/"+id, nil)
 	req.Header.Add("X-Mashape-Key", Environment.MashapeKey)
 	req.Header.Add("Authorization", "Client-ID "+Environment.ImgurClientID)
 
-	list, err := client.Do(req)
-	defer list.Body.Close()
+	resp, err := client.Do(req)
 	if err != nil {
-		close(links)
 		close(images)
 		return images
 	}
 
-	var a imgurAlbum
-	dec := json.NewDecoder(list.Body)
+	if endpoint == "album" || endpoint == "gallery/album" {
+		var a imgurAlbum
+		dec := json.NewDecoder(resp.Body)
 
-	if decerr := dec.Decode(&a); decerr == nil {
-		go func() {
-			for _, image := range a.Data.Images {
-				if link, err := url.Parse(image.Link); err == nil {
-					links <- link
+		if decerr := dec.Decode(&a); decerr == nil {
+			go func() {
+				for _, image := range a.Data.Images {
+					if image.ID != "" {
+						img := &Image{
+							"imgur.com",
+							image.ID,
+							"http://i.imgur.com/" + image.ID + "m.jpg",
+							a.Data.Link + "#" + image.ID,
+							a.Data.NSFW,
+						}
+						images <- img
+					}
 				}
-			}
-			close(links)
-		}()
+				close(images)
+			}()
+		} else {
+			fmt.Println("Decoding error for album", decerr)
+			close(images)
+		}
+
+		resp.Body.Close()
+		return images
 	}
 
 	go func() {
-		for l := range links {
-			images <- getImage(l, u.String())
+		var si singleImage
+		dec := json.NewDecoder(resp.Body)
+
+		if decerr := dec.Decode(&si); decerr == nil && si.Image.ID != "" {
+			img := &Image{
+				"imgur.com",
+				si.Image.ID,
+				"http://i.imgur.com/" + si.Image.ID + "m.jpg",
+				"http://imgur.com/" + si.Image.ID,
+				si.Image.NSFW,
+			}
+			go singleCache.Store(img.ID, img)
+			images <- img
+		} else {
+			fmt.Println("Decoding error for image")
+			fmt.Println("\t", decerr)
+			fmt.Println("\t", si)
 		}
+
 		close(images)
+		resp.Body.Close()
 	}()
 
 	return images
-}
-
-func getImage(u *url.URL, linkOverride string) *Image {
-	imgID := getImgurID(u)
-
-	var link string
-	if linkOverride != "" {
-		link = linkOverride + "#" + imgID
-	} else {
-		link = fmt.Sprintf("http://imgur.com/%v", imgID)
-	}
-
-	image := &Image{
-		"imgur.com",
-		imgID,
-		fmt.Sprintf("http://i.imgur.com/%vm.jpg", imgID),
-		link,
-		true,
-	}
-
-	singleCache.Store(imgID, image)
-
-	return image
 }
 
 func getImgurID(value *url.URL) string {
@@ -157,7 +179,11 @@ func (cache *ImgurCache) Store(key string, images ...*Image) {
 	}
 
 	if images != nil {
-		cache.cache[key] = images
+		if c, ok := cache.cache[key]; ok {
+			c = append(c, images...)
+		} else {
+			cache.cache[key] = images
+		}
 	}
 	cache.Unlock()
 }

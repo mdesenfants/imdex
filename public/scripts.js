@@ -77,6 +77,8 @@ function getUser(user) {
 				clearInterval(interval);
 				progress.hide();
 
+				console.log(event.data)
+
 				source = JSON.parse(event.data);
 
 				img = new Image();

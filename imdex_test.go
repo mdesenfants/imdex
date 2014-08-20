@@ -111,11 +111,18 @@ func TestGetUser(t *testing.T) {
 	if count < 10 {
 		t.Error(fmt.Sprintf("Expected at least 10 images, got %v", count))
 	}
+}
 
-	// Test cache hit
-	results = getUser(user)
+func TestGetUserStream(t *testing.T) {
+	// Test cache miss
+	results := getUserStream(user)
 
-	count = len(results)
+	count := 0
+
+	for _ = range results {
+		count++
+	}
+
 	if count < 10 {
 		t.Error(fmt.Sprintf("Expected at least 10 images, got %v", count))
 	}

@@ -5,11 +5,12 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"unicode"
 )
 
 // RedditProvider returns image links given a context
-type RedditProvider struct {}
+type RedditProvider struct{}
 
 // A Child is a reddit structure with information about a post
 type Child struct {
@@ -88,14 +89,21 @@ func childrenToFields(subs <-chan Child) <-chan string {
 	return out
 }
 
+// GetURLs grabs strings and parses them into urls if possible
 func (red RedditProvider) GetURLs(input <-chan string) <-chan *url.URL {
 	out := make(chan *url.URL)
 	go func() {
+		var wg sync.WaitGroup
 		for value := range input {
-			if imgURL, err := url.Parse(value); err == nil && imgURL.Scheme != "" {
-				out <- imgURL
-			}
+			wg.Add(1)
+			go func(value string) {
+				defer wg.Done()
+				if imgURL, err := url.Parse(value); err == nil && imgURL.Scheme != "" {
+					out <- imgURL
+				}
+			}(value)
 		}
+		wg.Wait()
 		close(out)
 	}()
 	return out
