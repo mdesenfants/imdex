@@ -131,7 +131,7 @@ func imgurRequest(endpoint, id string) <-chan *Image {
 				close(images)
 			}()
 		} else {
-			fmt.Println("Decoding error for album", decerr)
+			fmt.Println("Decoding error for", endpoint, id)
 			close(images)
 		}
 
@@ -154,9 +154,7 @@ func imgurRequest(endpoint, id string) <-chan *Image {
 			go singleCache.Store(img.ID, img)
 			images <- img
 		} else {
-			fmt.Println("Decoding error for image")
-			fmt.Println("\t", decerr)
-			fmt.Println("\t", si)
+			fmt.Println("Decoding error for image", id)
 		}
 
 		close(images)
