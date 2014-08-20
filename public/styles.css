@@ -13,14 +13,27 @@ h1 {
   margin: .3em;
 }
 
+input {
+    font-size: 1em;
+}
+
 input[type="text"] {
   border: solid black 1px;
-  font-size: 1em;
   width: 200px;
   background: #eee;
   color: black;
   padding: .6em;
   margin: 5px;
+}
+
+input[type="checkbox"] {
+    background: #eee;
+}
+
+input[type="button"] {
+    background-color: rgb(200, 74, 74);
+    color: black;
+    padding: .5em;
 }
 
 .output {

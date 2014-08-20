@@ -3,7 +3,12 @@ var output = null;
 var progress = null;
 var status = null;
 var checkbox = null;
+var nsfwConfirm = null;
 var hideNSFWstatus = true;
+
+function getVerticalOffset(target) {
+	return -Math.abs(target.parent().height()-target.height())/2;
+}
 
 function createSetupFunction(id, loadedImage, nsfw) {
 	return function() {
@@ -28,7 +33,7 @@ function createSetupFunction(id, loadedImage, nsfw) {
 			imageTarget.attr("src", loadedImage.src);
 		}
 
-		imageTarget.css("margin-top", -Math.abs(imageTarget.parent().height()-imageTarget.height())/2).hide().css("visibility", "visible");
+		imageTarget.css("margin-top", getVerticalOffset(imageTarget)).hide().css("visibility", "visible");
 
 		imageTarget.fadeIn("slow");
 	}
@@ -163,14 +168,18 @@ function getCookie(key) {
 	return ""
 }
 
+function showNSFWconfirm() {
+	confirm.show();
+}
+
 function showNSFW() {
 	hideNSFWstatus = false;
 	var date = new Date();
 	date.setTime(date.getTime() + 30*24*60*60*1000)
 	document.cookie="hidensfw=false; expires="+date.toGMTString();
 	$(".nsfw").each(function() {
-		$(this).attr("src", $(this).attr("actualsrc"))
-			.css("margin-top", ($(this).parent().height()-$(this).height())/2);
+		$(this).attr("src", $(this).attr("actualsrc"));
+		$(this).css("margin-top", getVerticalOffset($(this)));
 	});
 }
 
@@ -178,8 +187,8 @@ function hideNSFW() {
 	hideNSFWstatus = true;
 	document.cookie="hidensfw=true; expires=Thu, 01 Jan 1970 00:00:00 GMT";
 	$(".nsfw").each(function() {
-		$(this).attr("src", "nsfw.gif")
-			.css("margin-top", ($(this).parent().height()-$(this).height())/2);
+		$(this).attr("src", "nsfw.gif");
+		$(this).css("margin-top", getVerticalOffset($(this)));
 	});
 }
 
@@ -188,6 +197,7 @@ $(function () {
 	output = $('#output');
 	progress = $('#progress');
 	checkbox = $('#nsfw');
+	confirm = $('#confirm')
 
 
 	hideNSFWstatus = getCookie("hidensfw") == "";
@@ -197,6 +207,13 @@ $(function () {
 	refreshPage();
 
 	$(window).on('hashchange', refreshPage);
+
+
+	confirm.hide();
+	confirm.click(function() {
+		$(this).hide();
+		showNSFW();
+	});
 
 	box.change(function() {
 		window.location.hash = encodeURIComponent(box.val());
@@ -212,7 +229,7 @@ $(function () {
 		if ($(this).is(":checked")) {
 			hideNSFW();
 		} else {
-			showNSFW();
+			showNSFWconfirm();
 		}
 	});
 });
