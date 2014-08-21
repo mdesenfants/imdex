@@ -39,6 +39,7 @@ input[type="button"] {
     padding: .5em;
     width: 15em;
     white-space: normal;
+    border: solid rgb(200, 150, 150) 2px;
 }
 
 .output {

@@ -16,11 +16,10 @@ function createSetupFunction(id, loadedImage, nsfw) {
 		var responseTarget = $("#r"+id);
 
 		responseTarget
-			.mouseenter(function(){
+			.hover(function(){
 				$(this).children("a.context").animate({color: "#C0B8FF"}, 500);
-			})
-			.mouseleave(function(){
-				$(this).children("a.context").css("color", "black");
+			}, function(){
+				$(this).children("a.context").stop(true).css("color", "black");
 			});
 
 		if (loadedImage.width < loadedImage.height) {
