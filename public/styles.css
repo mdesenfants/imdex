@@ -52,7 +52,6 @@ input[type="button"] {
 
 .resultBox {
     margin: 0 auto;
-    float: left;
     display: inline-block;
 }
 

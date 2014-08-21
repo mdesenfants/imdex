@@ -38,14 +38,14 @@ type Listing struct {
 
 // Field contains a string and the context from which it originated
 type Field struct {
-	Value   *string
-	Context *string
+	Value   string
+	Context string
 }
 
 // URLWithContext contains a url pointer and the context from which it originated
 type URLWithContext struct {
-	URL     *url.URL
-	Context *string
+	URL     url.URL
+	Context string
 }
 
 func getChildren(user string) <-chan Child {
@@ -98,7 +98,7 @@ func childrenToFields(subs <-chan Child) <-chan Field {
 				context = "http://www.reddit.com/comments/" + linkID + "/_/" + sub.Data.ID + "?context=3"
 			}
 
-			out <- Field{&sub.Data.URL, &context}
+			out <- Field{sub.Data.URL, context}
 
 			// pull from comment text
 			fields := strings.FieldsFunc(sub.Data.Body, func(c rune) bool {
@@ -106,7 +106,7 @@ func childrenToFields(subs <-chan Child) <-chan Field {
 			})
 
 			for _, field := range fields {
-				out <- Field{&field, &context}
+				out <- Field{field, context}
 			}
 		}
 		close(out)
@@ -123,8 +123,8 @@ func (red RedditProvider) GetURLs(input <-chan Field) <-chan URLWithContext {
 			wg.Add(1)
 			go func(value Field) {
 				defer wg.Done()
-				if imgURL, err := url.Parse(*value.Value); err == nil && imgURL.Scheme != "" {
-					out <- URLWithContext{imgURL, value.Context}
+				if imgURL, err := url.Parse(value.Value); err == nil && imgURL.Scheme != "" {
+					out <- URLWithContext{*imgURL, value.Context}
 				}
 			}(value)
 		}

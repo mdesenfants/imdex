@@ -50,7 +50,7 @@ func (prov *ImgurProvider) GetImages(urls <-chan URLWithContext) <-chan *Image {
 			defer wg.Done()
 
 			if strings.Contains(u.URL.Host, "imgur.com") {
-				id := getImgurID(u.URL)
+				id := getImgurID(&u.URL)
 				if images := singleCache.Retrieve(id); images != nil {
 					fmt.Println("Imgur cache hit for", id)
 					for _, val := range images {
@@ -72,7 +72,7 @@ func (prov *ImgurProvider) GetImages(urls <-chan URLWithContext) <-chan *Image {
 				}
 
 				for val := range imgurRequest(endpoint, id) {
-					val.Context = *u.Context
+					val.Context = u.Context
 					output <- val
 				}
 			}
