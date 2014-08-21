@@ -58,26 +58,30 @@ func getChildren(user string) <-chan Child {
 	}
 
 	go func() {
+		var wg sync.WaitGroup
 		for _, address := range urls {
-			list, err := http.Get(address)
-			if err != nil {
-				continue
-			}
+			wg.Add(1)
+			go func(address string) {
+				defer wg.Done()
+				list, err := http.Get(address)
+				if err != nil {
+					return
+				}
 
-			var l Listing
-			dec := json.NewDecoder(list.Body)
-			if decerr := dec.Decode(&l); decerr != nil {
-				close(output)
-				break
-			}
+				var l Listing
+				dec := json.NewDecoder(list.Body)
+				if decerr := dec.Decode(&l); decerr != nil {
+					return
+				}
 
-			for _, value := range l.Children {
-				output <- value
-			}
+				for _, value := range l.Children {
+					output <- value
+				}
 
-			list.Body.Close()
+				list.Body.Close()
+			}(address)
 		}
-
+		wg.Wait()
 		close(output)
 	}()
 
@@ -86,29 +90,36 @@ func getChildren(user string) <-chan Child {
 
 func childrenToFields(subs <-chan Child) <-chan Field {
 	out := make(chan Field)
+	var wg sync.WaitGroup
 	go func() {
 		for sub := range subs {
-			// pull directly from post
-			var context string
-			switch sub.Kind {
-			case "t3":
-				context = "http://reddit.com" + sub.Data.Permalink
-			case "t1":
-				linkID := strings.Split(sub.Data.LinkID, "_")[1]
-				context = "http://www.reddit.com/comments/" + linkID + "/_/" + sub.Data.ID + "?context=3"
-			}
+			wg.Add(1)
 
-			out <- Field{sub.Data.URL, context}
+			go func(sub Child) {
+				defer wg.Done()
+				// pull directly from post
+				var context string
+				switch sub.Kind {
+				case "t3":
+					context = "http://reddit.com" + sub.Data.Permalink
+				case "t1":
+					linkID := strings.Split(sub.Data.LinkID, "_")[1]
+					context = "http://www.reddit.com/comments/" + linkID + "/_/" + sub.Data.ID + "?context=3"
+				}
 
-			// pull from comment text
-			fields := strings.FieldsFunc(sub.Data.Body, func(c rune) bool {
-				return unicode.IsSpace(c) || strings.ContainsRune("[]()", c)
-			})
+				out <- Field{sub.Data.URL, context}
 
-			for _, field := range fields {
-				out <- Field{field, context}
-			}
+				// pull from comment text
+				fields := strings.FieldsFunc(sub.Data.Body, func(c rune) bool {
+					return unicode.IsSpace(c) || strings.ContainsRune("[]()", c)
+				})
+
+				for _, field := range fields {
+					out <- Field{field, context}
+				}
+			}(sub)
 		}
+		wg.Wait()
 		close(out)
 	}()
 	return out
