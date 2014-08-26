@@ -23,6 +23,7 @@ type Image struct {
 	URL       string `json:"url"`
 	NSFW      bool   `json:"nsfw"`
 	Context   string `json:"context"`
+	Animated  string `json:"animated"`
 }
 
 // A Result is a list of images for a user
@@ -107,10 +108,6 @@ func main() {
 	m.Use(martini.Static("js"))
 	m.Use(martini.Static("images"))
 
-	m.Get("/", func(r render.Render) {
-		r.HTML(200, "index", "reddit user name")
-	})
-
 	m.Get("/find/stream", func(w http.ResponseWriter, r *http.Request) {
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
@@ -143,6 +140,14 @@ func main() {
 		user := p["user"]
 		result := &Result{user, getUser(user)}
 		r.JSON(200, *result)
+	})
+
+	m.Get("/:name", func(r render.Render, p martini.Params) {
+		r.HTML(200, "index", "reddit user name")
+	})
+
+	m.Get("/", func(r render.Render) {
+		r.HTML(200, "index", "reddit user name")
 	})
 
 	m.Run()

@@ -5,6 +5,7 @@ var status = null;
 var checkbox = null;
 var nsfwConfirm = null;
 var hideNSFWstatus = true;
+var lastSearch = '';
 
 function getVerticalOffset(target) {
 	return -Math.abs(target.parent().height()-target.height())/2;
@@ -156,10 +157,25 @@ function getUser(user) {
 }
 
 function refreshPage() {
-	var curUser = decodeURIComponent(window.location.hash.slice(1));
-	if (curUser && curUser !== "") {
-		getUser(curUser);
-		box.val(curUser)
+	var path = window.location.pathname;
+
+	if (path.substring(0, 1) == '/') {
+		path = path.substring(1);
+	}
+
+	var curUser = decodeURIComponent(path);
+
+	if (curUser != lastSearch) {
+		lastSearch = curUser;
+		box.attr('value', curUser);
+		
+		if (!curUser || curUser === "") {
+			curUser = decodeURIComponent(window.location.hash.slice(1));
+		}
+
+		if (curUser && curUser !== "") {
+			getUser(curUser);
+		}
 	}
 }
 
@@ -200,6 +216,18 @@ function hideNSFW() {
 	});
 }
 
+function navigate() {
+	var encoded = encodeURIComponent(box.val())
+	if (window.history.pushState)
+	{
+		window.history.pushState({}, '', encoded);
+		refreshPage();
+		return;
+	}
+
+	window.location.href = encoded;
+}
+
 $(function () {
 	box = $('#username');
 	output = $('#output');
@@ -212,10 +240,11 @@ $(function () {
 
 	checkbox[0].checked = hideNSFWstatus;
 
-	refreshPage();
-
-	$(window).on('hashchange', refreshPage);
-
+	window.onload = refreshPage;
+	window.onpopstate = function() {
+		if (window.history.state === null) return;
+		refreshPage();
+	}
 
 	confirm.hide();
 	confirm.click(function() {
@@ -224,12 +253,12 @@ $(function () {
 	});
 
 	box.change(function() {
-		window.location.hash = encodeURIComponent(box.val());
+		navigate();
 	});
 
 	box.keypress(function(e) {
 		if(e.which == 13) {
-			window.location.hash = encodeURIComponent(box.val());
+			navigate();
 		}
 	});
 

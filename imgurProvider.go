@@ -21,9 +21,10 @@ var singleCache = ImgurCache{}
 type ImgurProvider struct{}
 
 type imgurImage struct {
-	ID   string `json:"id"`
-	Link string `json:"link"`
-	NSFW bool   `json:"nsfw"`
+	ID       string `json:"id"`
+	Link     string `json:"link"`
+	NSFW     bool   `json:"nsfw"`
+	Animated bool   `json:"animated"`
 }
 
 type singleImage struct {
@@ -126,6 +127,7 @@ func imgurRequest(endpoint, id string) <-chan *Image {
 							a.Data.Link + "#" + image.ID,
 							a.Data.NSFW,
 							"",
+							"",
 						}
 						images <- img
 					}
@@ -152,6 +154,7 @@ func imgurRequest(endpoint, id string) <-chan *Image {
 				"http://i.imgur.com/" + si.Image.ID + "m.jpg",
 				"http://imgur.com/" + si.Image.ID,
 				si.Image.NSFW,
+				"",
 				"",
 			}
 			go singleCache.Store(img.ID, img)
