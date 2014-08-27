@@ -88,6 +88,35 @@ func (prov *ImgurProvider) GetImages(urls <-chan URLWithContext) <-chan *Image {
 	return output
 }
 
+func retrievedToImage(image imgurImage, album string, nsfw bool) *Image {
+
+	var link string
+	if album != "" {
+		link = album + "#" + image.ID
+	} else {
+		link = "http://imgur.com/" + image.ID
+	}
+
+	var animated string
+	if image.Animated {
+		animated = "http://i.imgur.com/" + image.ID + ".gif"
+	} else {
+		animated = ""
+	}
+
+	img := &Image{
+		"imgur.com",
+		image.ID,
+		"http://i.imgur.com/" + image.ID + "m.jpg",
+		link,
+		nsfw || image.NSFW,
+		"",
+		animated,
+	}
+
+	return img
+}
+
 func imgurRequest(endpoint, id string) <-chan *Image {
 	images := make(chan *Image)
 	if lister := singleCache.Retrieve(id); lister != nil {
@@ -120,16 +149,7 @@ func imgurRequest(endpoint, id string) <-chan *Image {
 			go func() {
 				for _, image := range a.Data.Images {
 					if image.ID != "" {
-						img := &Image{
-							"imgur.com",
-							image.ID,
-							"http://i.imgur.com/" + image.ID + "m.jpg",
-							a.Data.Link + "#" + image.ID,
-							a.Data.NSFW,
-							"",
-							"",
-						}
-						images <- img
+						images <- retrievedToImage(image, a.Data.Link, a.Data.NSFW)
 					}
 				}
 				close(images)
@@ -148,15 +168,7 @@ func imgurRequest(endpoint, id string) <-chan *Image {
 		dec := json.NewDecoder(resp.Body)
 
 		if decerr := dec.Decode(&si); decerr == nil && si.Image.ID != "" {
-			img := &Image{
-				"imgur.com",
-				si.Image.ID,
-				"http://i.imgur.com/" + si.Image.ID + "m.jpg",
-				"http://imgur.com/" + si.Image.ID,
-				si.Image.NSFW,
-				"",
-				"",
-			}
+			img := retrievedToImage(si.Image, "", si.Image.NSFW)
 			go singleCache.Store(img.ID, img)
 			images <- img
 		} else {

@@ -64,8 +64,17 @@ function insertImage(source) {
 
 	output.append('<div class="resultBox" id="r'+source.id+'"><a target="_blank" class="imgBox" href="'
 		+source.url+'"><img id="'+source.id+'" '+(source.nsfw ? 'class="nsfw"':'')+'"/></a><br /><a target="_blank" href="'+source.context+'" class="context">context</a></div>');
+
 	$(img).load(createSetupFunction(source.id, img));
 	$(img).error(function() { $("#r"+source.id).remove()})
+
+	if (source.animated && source.animated !== "") {
+		setTimeout(function() {
+			var animatedImg = new Image();
+			animatedImg.src = source.animated;
+			$(animatedImg).load(createSetupFunction(source.id, animatedImg));
+		}, 2000);
+	}
 }
 
 function getUser(user) {
@@ -168,7 +177,7 @@ function refreshPage() {
 	if (curUser != lastSearch) {
 		lastSearch = curUser;
 		box.attr('value', curUser);
-		
+
 		if (!curUser || curUser === "") {
 			curUser = decodeURIComponent(window.location.hash.slice(1));
 		}
