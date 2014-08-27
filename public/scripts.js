@@ -62,18 +62,26 @@ function insertImage(source) {
 	var img = new Image();
 	img.src = source.thumbnail;
 
-	output.append('<div class="resultBox" id="r'+source.id+'"><a target="_blank" class="imgBox" href="'
+	var resultBox = $('<div class="resultBox" id="r'+source.id+'"><a target="_blank" class="imgBox" href="'
 		+source.url+'"><img id="'+source.id+'" '+(source.nsfw ? 'class="nsfw"':'')+'"/></a><br /><a target="_blank" href="'+source.context+'" class="context">context</a></div>');
+
+	output.append(resultBox);
 
 	$(img).load(createSetupFunction(source.id, img));
 	$(img).error(function() { $("#r"+source.id).remove()})
 
 	if (source.animated && source.animated !== "") {
-		setTimeout(function() {
-			var animatedImg = new Image();
-			animatedImg.src = source.animated;
-			$(animatedImg).load(createSetupFunction(source.id, animatedImg));
-		}, 2000);
+		var animatedImg = new Image();
+		animatedImg.src = source.animated;
+		$(animatedImg).load(function() {
+			var rbi = resultBox.children("a").children("img");
+			resultBox.hover(function() {
+				rbi.attr("backup", rbi.attr("src"));
+				rbi.attr("src", animatedImg.src);
+			}, function() {
+				rbi.attr("src", rbi.attr("backup"));
+			});
+		});
 	}
 }
 
