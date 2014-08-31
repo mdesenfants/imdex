@@ -76,8 +76,10 @@ function insertImage(source) {
 		$(animatedImg).load(function() {
 			var rbi = resultBox.children("a").children("img");
 			resultBox.hover(function() {
-				rbi.attr("backup", rbi.attr("src"));
-				rbi.attr("src", animatedImg.src);
+				if (!(hideNSFWstatus && rbi.hasClass("nsfw"))) {
+					rbi.attr("backup", rbi.attr("src"));
+					rbi.attr("src", animatedImg.src);
+				}
 			}, function() {
 				rbi.attr("src", rbi.attr("backup"));
 			});
@@ -235,9 +237,10 @@ function hideNSFW() {
 
 function navigate() {
 	var encoded = encodeURIComponent(box.val())
-	if (window.history.pushState)
+	if (window.history.pushState && box.val() != lastSearch)
 	{
 		window.history.pushState({}, '', encoded);
+		console.log("navigate pushstate")
 		refreshPage();
 		return;
 	}
@@ -259,6 +262,7 @@ $(function () {
 
 	window.onload = refreshPage;
 	window.onpopstate = function() {
+		console.log('popstate');
 		if (window.history.state === null) return;
 		refreshPage();
 	}
