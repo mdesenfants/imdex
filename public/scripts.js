@@ -227,6 +227,7 @@ function showNSFW() {
 }
 
 function hideNSFW() {
+	confirm.hide();
 	hideNSFWstatus = true;
 	document.cookie="hidensfw=true; expires=Thu, 01 Jan 1970 00:00:00 GMT";
 	$(".nsfw").each(function() {
