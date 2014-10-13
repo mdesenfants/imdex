@@ -1,10 +1,14 @@
 package main
 
-import "net/url"
+import (
+	"net/url"
+
+	"github.com/mdesenfants/imdex/common"
+)
 
 // ImageProvider turns a channel of url pointers into a channel of Image pointers
 type ImageProvider interface {
-	GetImages(urls <-chan *url.URL) <-chan *Image
+	GetImages(urls <-chan *url.URL) <-chan *common.Image
 }
 
 // URLProvider provides a channel of strings into a channel of URLs

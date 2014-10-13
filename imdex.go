@@ -6,49 +6,27 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"sync"
 	"time"
 
 	"github.com/go-martini/martini"
 	"github.com/gorilla/websocket"
 	"github.com/martini-contrib/render"
+	"github.com/mdesenfants/imdex/common"
+	"github.com/mdesenfants/imdex/providers"
 )
-
-// Image contains information about an image result
-type Image struct {
-	Host      string `json:"host"`
-	ID        string `json:"id"`
-	Thumbnail string `json:"thumbnail"`
-	URL       string `json:"url"`
-	NSFW      bool   `json:"nsfw"`
-	Context   string `json:"context"`
-	Animated  string `json:"animated"`
-}
-
-// A Result is a list of images for a user
-type Result struct {
-	Name   string            `json:"name"`
-	Images map[string]*Image `json:"images"`
-}
-
-// Settings contains the web app settings
-type Settings struct {
-	ImgurClientID string `json:"imgurClientId"`
-	MashapeKey    string `json:"mashapeKey"`
-}
 
 // SearchCache stores the retrieved urls for a user
 type SearchCache struct {
 	sync.RWMutex
-	cache map[string]map[string]*Image
+	cache map[string]map[string]*common.Image
 }
 
 // Store keeps a value in the searchCache
-func (cache *SearchCache) Store(key string, images map[string]*Image) {
+func (cache *SearchCache) Store(key string, images map[string]*common.Image) {
 	cache.Lock()
 	if cache.cache == nil {
-		cache.cache = make(map[string]map[string]*Image)
+		cache.cache = make(map[string]map[string]*common.Image)
 	}
 
 	if images != nil {
@@ -67,8 +45,8 @@ func (cache *SearchCache) Store(key string, images map[string]*Image) {
 }
 
 // Retrieve gets an item from the searchCache or nil
-func (cache *SearchCache) Retrieve(key string) map[string]*Image {
-	var value map[string]*Image
+func (cache *SearchCache) Retrieve(key string) map[string]*common.Image {
+	var value map[string]*common.Image
 
 	cache.RLock()
 	if cache.cache == nil {
@@ -81,11 +59,8 @@ func (cache *SearchCache) Retrieve(key string) map[string]*Image {
 	return value
 }
 
-// Environment contains all the runtime info
-var Environment Settings
-
 var reddit RedditProvider
-var imgur ImgurProvider
+var imgur imageProviders.ImgurProvider
 var searchCache SearchCache
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
@@ -99,8 +74,6 @@ var upgrader = websocket.Upgrader{
 func main() {
 	m := martini.Classic()
 
-	setup()
-
 	m.Use(render.Renderer(render.Options{
 		Extensions: []string{".html"},
 	}))
@@ -109,6 +82,7 @@ func main() {
 	m.Use(martini.Static("images"))
 
 	m.Get("/find/stream", func(w http.ResponseWriter, r *http.Request) {
+
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			log.Println(err)
@@ -138,7 +112,7 @@ func main() {
 
 	m.Get("/find/:user", func(r render.Render, p martini.Params) {
 		user := p["user"]
-		result := &Result{user, getUser(user)}
+		result := &common.Result{Name: user, Images: getUser(user)}
 		r.JSON(200, *result)
 	})
 
@@ -153,21 +127,7 @@ func main() {
 	m.Run()
 }
 
-func setup() {
-	// Setup runtime settings
-	file, ferr := os.Open("imdex.json")
-	defer file.Close()
-	if ferr != nil {
-		panic("Could not load imdex.json")
-	}
-
-	envDec := json.NewDecoder(file)
-	if decerr := envDec.Decode(&Environment); decerr != nil {
-		panic(fmt.Sprintf("Could not read imdex.json: %v", decerr))
-	}
-}
-
-func getUser(user string) map[string]*Image {
+func getUser(user string) map[string]*common.Image {
 	if value := searchCache.Retrieve(user); value != nil {
 		fmt.Println("Cache hit for", user, "with", len(value), "URLs.")
 		return value
@@ -178,7 +138,7 @@ func getUser(user string) map[string]*Image {
 	fields := childrenToFields(children)
 	URLs := reddit.GetURLs(fields)
 
-	images := make(map[string]*Image)
+	images := make(map[string]*common.Image)
 	for img := range imgur.GetImages(URLs) {
 		images[img.ID] = img
 	}
@@ -188,11 +148,11 @@ func getUser(user string) map[string]*Image {
 	return images
 }
 
-func getUserStream(user string) <-chan *Image {
+func getUserStream(user string) <-chan *common.Image {
 	if value := searchCache.Retrieve(user); value != nil {
 		fmt.Println("Cache hit for", user, "with", len(value), "URLs.")
 
-		imageChan := make(chan *Image)
+		imageChan := make(chan *common.Image)
 
 		go func() {
 			for _, img := range value {

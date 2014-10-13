@@ -7,6 +7,8 @@ import (
 	"strings"
 	"sync"
 	"unicode"
+
+	"github.com/mdesenfants/imdex/common"
 )
 
 // RedditProvider returns image links given a context
@@ -39,12 +41,6 @@ type Listing struct {
 // Field contains a string and the context from which it originated
 type Field struct {
 	Value   string
-	Context string
-}
-
-// URLWithContext contains a url pointer and the context from which it originated
-type URLWithContext struct {
-	URL     url.URL
 	Context string
 }
 
@@ -126,8 +122,8 @@ func childrenToFields(subs <-chan Child) <-chan Field {
 }
 
 // GetURLs grabs strings and parses them into urls if possible
-func (red RedditProvider) GetURLs(input <-chan Field) <-chan URLWithContext {
-	out := make(chan URLWithContext)
+func (red RedditProvider) GetURLs(input <-chan Field) <-chan common.URLWithContext {
+	out := make(chan common.URLWithContext)
 	go func() {
 		var wg sync.WaitGroup
 		for value := range input {
@@ -135,7 +131,7 @@ func (red RedditProvider) GetURLs(input <-chan Field) <-chan URLWithContext {
 			go func(value Field) {
 				defer wg.Done()
 				if imgURL, err := url.Parse(value.Value); err == nil && imgURL.Scheme != "" {
-					out <- URLWithContext{*imgURL, value.Context}
+					out <- common.URLWithContext{*imgURL, value.Context}
 				}
 			}(value)
 		}
