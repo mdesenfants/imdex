@@ -19,8 +19,12 @@ var lastModified time.Time
 //
 func refreshSettings() {
 	filename := "imdex.json"
-	stat, _ := os.Stat(filename)
-	updated := stat.ModTime()
+	stat, serr := os.Stat(filename)
+
+	var updated time.Time
+	if serr != nil {
+		updated = stat.ModTime()
+	}
 
 	if environment == nil || updated.After(lastModified) {
 		// Setup runtime settings
