@@ -52,6 +52,7 @@ input[type="button"] {
     background-color: #FCC987;
     border-bottom: solid #EBAD60 1em;
     border-top: solid #F9DEBD 0.2em;
+    border-right: solid #FCC987 1em;
     padding-bottom: 1em;
 }
 
@@ -69,7 +70,6 @@ input[type="button"] {
     margin: 0 auto;
     border-top: solid #FCC987 1em;
     border-left: solid #FCC987 1em;
-    border-right: solid #FCC987 1em;
     display: inline-block;
 }
 
