@@ -69,6 +69,7 @@ input[type="button"] {
     margin: 0 auto;
     border-top: solid #FCC987 1em;
     border-left: solid #FCC987 1em;
+    border-right: solid #FCC987 1em;
     display: inline-block;
 }
 
