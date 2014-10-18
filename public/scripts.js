@@ -63,7 +63,7 @@ function insertImage(source) {
 	img.src = source.thumbnail;
 
 	var resultBox = $('<div class="resultBox" id="r'+source.id+'"><a target="_blank" class="imgBox" href="'
-		+source.url+'"><img id="'+source.id+'" '+(source.nsfw ? 'class="nsfw"':'')+'"/></a><br /><a target="_blank" href="'+source.context+'" class="context">context</a></div>');
+		+source.url+'"><img id="'+source.id+'" '+(source.nsfw ? 'class="nsfw"':'')+' animated"/></a><br /><a target="_blank" href="'+source.context+'" class="context">context</a></div>');
 
 	output.append(resultBox);
 
