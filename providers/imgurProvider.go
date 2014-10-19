@@ -11,14 +11,6 @@ import (
 	"github.com/mdesenfants/imdex/common"
 )
 
-// ImgurCache stores commonly-retrieved images
-type ImgurCache struct {
-	sync.RWMutex
-	cache map[string][]*common.Image
-}
-
-var singleCache = ImgurCache{}
-
 // ImgurProvider provides images from URLs
 type ImgurProvider struct{}
 

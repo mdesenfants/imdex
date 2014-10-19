@@ -33,7 +33,7 @@ func (cache *SearchCache) Store(key string, images map[string]*common.Image) {
 		cache.cache[key] = images
 
 		go func() {
-			timer := time.NewTimer(time.Minute * 10)
+			timer := time.NewTimer(time.Minute * 60)
 			<-timer.C
 			cache.Lock()
 			delete(cache.cache, key)
@@ -107,7 +107,6 @@ func main() {
 		}
 
 		conn.Close()
-		fmt.Println("Closed connection.")
 	})
 
 	m.Get("/find/:user", func(r render.Render, p martini.Params) {
@@ -129,11 +128,9 @@ func main() {
 
 func getUser(user string) map[string]*common.Image {
 	if value := searchCache.Retrieve(user); value != nil {
-		fmt.Println("Cache hit for", user, "with", len(value), "URLs.")
 		return value
 	}
 
-	fmt.Println("Miss for", user)
 	children := getChildren(user)
 	fields := childrenToFields(children)
 	URLs := reddit.GetURLs(fields)
@@ -150,8 +147,6 @@ func getUser(user string) map[string]*common.Image {
 
 func getUserStream(user string) <-chan *common.Image {
 	if value := searchCache.Retrieve(user); value != nil {
-		fmt.Println("Cache hit for", user, "with", len(value), "URLs.")
-
 		imageChan := make(chan *common.Image)
 
 		go func() {

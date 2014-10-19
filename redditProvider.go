@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"time"
 	"unicode"
 
 	"github.com/mdesenfants/imdex/common"
@@ -59,7 +60,14 @@ func getChildren(user string) <-chan Child {
 			wg.Add(1)
 			go func(address string) {
 				defer wg.Done()
-				list, err := http.Get(address)
+
+				client := &http.Client{}
+				req, err := http.NewRequest("GET", address, nil)
+				req.Header.Add("User-Agent", "imgwaffle/1.0 by bottombutton")
+
+				getToken()
+				list, err := client.Do(req)
+
 				if err != nil {
 					return
 				}
@@ -121,8 +129,28 @@ func childrenToFields(subs <-chan Child) <-chan Field {
 	return out
 }
 
+var tokens = make(chan bool, 30)
+
+func startTokens() {
+	println("starting tokens")
+	go func() {
+		for {
+			timer := time.NewTimer(time.Second * 2)
+			<-timer.C
+			tokens <- true
+		}
+	}()
+}
+
+func getToken() {
+	<-tokens
+}
+
+var once sync.Once
+
 // GetURLs grabs strings and parses them into urls if possible
 func (red RedditProvider) GetURLs(input <-chan Field) <-chan common.URLWithContext {
+	once.Do(startTokens)
 	out := make(chan common.URLWithContext)
 	go func() {
 		var wg sync.WaitGroup
@@ -131,7 +159,7 @@ func (red RedditProvider) GetURLs(input <-chan Field) <-chan common.URLWithConte
 			go func(value Field) {
 				defer wg.Done()
 				if imgURL, err := url.Parse(value.Value); err == nil && imgURL.Scheme != "" {
-					out <- common.URLWithContext{*imgURL, value.Context}
+					out <- common.URLWithContext{URL: *imgURL, Context: value.Context}
 				}
 			}(value)
 		}
