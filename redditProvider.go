@@ -48,9 +48,9 @@ func getChildren(user string) <-chan Child {
 	output := make(chan Child)
 
 	urls := []string{
-		"http://www.reddit.com/user/" + user + "/comments.json?sort=top",
-		"http://www.reddit.com/user/" + user + "/submitted.json?sort=top",
-		"http://www.reddit.com/user/" + user + ".json?sort=top",
+		"http://www.reddit.com/user/" + user + "/comments.json?sort=top&limit=100",
+		"http://www.reddit.com/user/" + user + "/submitted.json?sort=top&limit=100",
+		"http://www.reddit.com/user/" + user + ".json?sort=top&limit=100",
 	}
 
 	go func() {

@@ -45,15 +45,23 @@ input[type="button"] {
     border: solid rgb(200, 150, 150) 2px;
 }
 
+.progress {
+    margin: 1em;
+}
+
 .output {
     text-align: center;
-    display: inline-block;
+    display: block;
     margin-top: 1em;
     background-color: #FCC987;
-    border-bottom: solid #EBAD60 1em;
-    border-top: solid #F9DEBD 0.2em;
-    border-right: solid #FCC987 1em;
+    border-bottom: solid #EBAD60 .4em;
     padding-bottom: 1em;
+    padding-right: 1em;
+    position: relative;
+}
+
+.output:empty {
+    display: none;
 }
 
 .header {
@@ -68,26 +76,26 @@ input[type="button"] {
 
 .resultBox {
     margin: 0 auto;
-    border-top: solid #FCC987 1em;
-    border-left: solid #FCC987 1em;
+    margin-top: 1em;
+    margin-left: 1em;
+    border-top: solid #EBAD60 .4em;
+    border-left: solid #EBAD60 .4em;
     display: inline-block;
+    position: relative;
 }
 
 .resultBox a.context {
     position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    font-size: .8em;
     text-decoration: none;
-    color: black;
+    color: #C0B8FF;
+    background-color: gray;
+    display: none;
     margin: 0;
-    top: -2em;
+    opacity: .8;
 }
-
-.resultBox a.context:hover {
-    font-size: .8em;
-    text-decoration: none;
-}
-
 
 .imgBox {
     height: 15em;
@@ -96,10 +104,6 @@ input[type="button"] {
     padding: 0;
     overflow: hidden;
     text-align: center;
-    border-bottom: solid #F9DEBD 0.1em;
-    border-right: solid #F9DEBD .1em;
-    border-top: solid #EBAD60 .4em;
-    border-left: solid #EBAD60 .4em;
 }
 
 div.animated {

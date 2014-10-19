@@ -18,9 +18,9 @@ function createSetupFunction(id, loadedImage, nsfw) {
 
 		responseTarget
 			.hover(function(){
-				$(this).children("a.context").animate({color: "#C0B8FF"}, 500);
+				$(this).children("a.context").toggle();
 			}, function(){
-				$(this).children("a.context").stop(true).css("color", "black");
+				$(this).children("a.context").stop(true).toggle();
 			});
 
 		if (loadedImage.width < loadedImage.height) {
@@ -62,8 +62,10 @@ function insertImage(source) {
 	var img = new Image();
 	img.src = source.thumbnail;
 
-	var resultBox = $('<div class="resultBox" id="r'+source.id+'"><a target="_blank" class="imgBox" href="'
-		+source.url+'"><img id="'+source.id+'" '+(source.nsfw ? 'class="nsfw"':'')+' animated"/></a><br /><a target="_blank" href="'+source.context+'" class="context">context</a></div>');
+	var resultBox = $('<div class="resultBox" id="r'+source.id+'">'
+		+'<a target="_blank" class="imgBox" href="'+source.url+'"><img id="'+source.id+'" '+(source.nsfw ? 'class="nsfw"':'')+' animated"/></a>'
+		+'<a target="_blank" href="'+source.context+'" class="context">context</a>'
+		+'</div>');
 
 	output.append(resultBox);
 
