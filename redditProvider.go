@@ -133,6 +133,12 @@ var tokens = make(chan bool, 30)
 
 func startTokens() {
 	println("starting tokens")
+
+	// Start with two tokens
+	tokens <- true
+	tokens <- true
+
+	// Add a new token ever 2 seconds per reddit api guidelines
 	go func() {
 		for {
 			timer := time.NewTimer(time.Second * 2)
