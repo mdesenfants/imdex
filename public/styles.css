@@ -82,6 +82,11 @@ input[type="button"] {
     border-left: solid #EBAD60 .4em;
     display: inline-block;
     position: relative;
+    text-align: middle;
+}
+
+.resultBox.nsfw {
+    background-image: url(/nsfw.gif);
 }
 
 .resultBox a.context {
