@@ -18,7 +18,7 @@
             <h1>imgwaffle</h1><input type="text" data-ng-model="search" data-ng-trim="true" data-ng-blur="get(search)"/>
         </form>
         <input type="checkbox" ng-model="hidensfw">Hide NSFW</input>
-        <p class="progress" data-ng-show="images.length == 0">Loading...</p>
+        <p class="progress" data-ng-show="images.length == 0 && search.length > 0">Loading...</p>
         <p class="progress" data-ng-show="images.length > 0">{{images.length}} image{{images.length != 1 ? 's' : ''}}</p>
         <div class="output">
             <div class="resultBox" data-ng-repeat="image in images | limitTo:max">
