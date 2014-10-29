@@ -50,7 +50,6 @@ angular.module('imgwaffle', [])
 	$scope.images = [];
 	$scope.hidensfw = true;
 	$scope.max = 30;
-	$scope.search = $location.path().substring(1, $location.path().length);
 	$scope.lastSearch = '';
 
 	ImageService.subscribe(function(message) {
@@ -70,11 +69,21 @@ angular.module('imgwaffle', [])
 		}
 	};
 
+	$scope.getSearch = function() {
+		return $location.path().substring(1, $location.path().length);
+	};
+
 	$scope.blurOnEnter = function($event) {
 		if ($event.keyCode != 13) return;
 		$timeout(function() {$event.target.blur();}, 0, false);
 	}
 
+	$scope.$watch(function() { return $location.path(); }, function(url) {
+		$scope.search = $scope.getSearch();
+		$scope.get($scope.search);
+	});
+
+	$scope.search = $scope.getSearch();
 	if ($scope.search != '') {
 		$scope.get($scope.search);
 	}
