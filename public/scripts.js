@@ -42,10 +42,16 @@ angular.module('imgwaffle', [])
 
 .factory('ImageService', getImageService)
 
-.controller('imageList', ['$scope', 'ImageService', function($scope, ImageService){
+.config(function($locationProvider) {
+	$locationProvider.html5Mode(true);
+})
+
+.controller('imageList', ['$scope', '$location', 'ImageService', function($scope, $location, ImageService){
 	$scope.images = [];
 	$scope.hidensfw = true;
 	$scope.max = 30;
+	$scope.search = $location.path().substring(1, $location.path().length);
+	$scope.lastSearch = '';
 
 	ImageService.subscribe(function(message) {
 		$scope.images.push(message);
@@ -53,8 +59,23 @@ angular.module('imgwaffle', [])
 	});
 
 	$scope.get = function(message) {
-		$scope.max = 30;
-		$scope.images = [];
-		ImageService.send(message);
+		if (message != $scope.lastSearch)
+		{
+			$scope.max = 30;
+			$scope.images = [];
+			$location.path('/'+message);
+
+			ImageService.send(message);
+			$scope.lastSearch = message;
+		}
 	};
+
+	$scope.blurOnEnter = function($event) {
+		if ($event.keyCode != 13) return;
+		$timeout(function() {$event.target.blur();}, 0, false);
+	}
+
+	if ($scope.search != '') {
+		$scope.get($scope.search);
+	}
 }]);

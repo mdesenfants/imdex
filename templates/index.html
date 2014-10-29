@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html data-ng-app="imgwaffle">
     <head>
+        <base href="/" />
         <title>imgwaffle</title>
         <link rel="icon" type="image/png" href="/favicon.png" />
         <link rel="stylesheet" type="text/css" href="/styles.css" />
@@ -14,13 +15,13 @@
 
     <body data-ng-controller="imageList">
         <form data-ng-submit="get(search)">
-            <input type="text" data-ng-model="search"/>
+            <input type="text" data-ng-model="search" data-ng-trim="true" data-ng-blur="get(search)"/>
         </form>
         <input type="checkbox" ng-model="hidensfw">Hide NSFW</input>
         <p class="progress">{{images.length}} image{{images.length != 1 ? 's' : ''}}</p>
         <div class="output">
             <div class="resultBox" data-ng-repeat="image in images | limitTo:max">
-                <a class="imageLink" target="_blank" data-ng-href="{{ image.url }}" style="background-image: url({{!(image.nsfw && hidensfw) ? image.thumbnail : '/nsfw.gif'}});"></a>
+                <a class="imageLink" target="_blank" data-ng-href="{{ image.url }}" style="background-image: url({{!(image.nsfw && hidensfw) ? image.animated || image.thumbnail : '/nsfw.gif'}});"></a>
             </div>
             <a href="" class="page" data-ng-click="max=max+30" data-ng-show="max < images.length">Show More</a>
         </div>
