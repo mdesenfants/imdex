@@ -1,23 +1,29 @@
 <!DOCTYPE html>
-<html>
+<html data-ng-app="imgwaffle">
     <head>
         <title>imgwaffle</title>
-        <link rel="stylesheet" type="text/css" href="/styles.css" />
         <link rel="icon" type="image/png" href="/favicon.png" />
+        <link rel="stylesheet" type="text/css" href="/styles.css" />
         <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+        <script src="/jquery.color-2.1.2.min.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.0/angular.min.js"></script>
+        <script src="/scripts.js"></script>
     </head>
-    <body>
-        <p class="header">
-            <h1>imgwaffle</h1>
-            <input type="text" placeholder="reddit user" name="username" id="username"/>
-            <br /><input type="checkbox" checked="checked" id="nsfw">Hide NSFW</input>
-            <br /><input type="button" id="confirm" value="I am at least 18 years old and willing to view adult content.">
-        </p>
-        <p id="progress" clss="progress"></p>
-        <p id="output" class="output"></p>
+
+    <body data-ng-controller="imageList">
+        <form data-ng-submit="get(search)">
+            <input type="text" data-ng-model="search"/>
+        </form>
+        <input type="checkbox" ng-model="hidensfw">Hide NSFW</input>
+        <p class="progress">{{images.length}} image{{images.length != 1 ? 's' : ''}}</p>
+        <div class="output">
+            <div class="resultBox" data-ng-repeat="image in images | limitTo:max">
+                <a class="imageLink" target="_blank" data-ng-href="{{ image.url }}" style="background-image: url({{!(image.nsfw && hidensfw) ? image.thumbnail : '/nsfw.gif'}});"></a>
+            </div>
+            <a href="" class="page" data-ng-click="max=max+30" data-ng-show="max < images.length">Show More</a>
+        </div>
         <p id="footer" class="footer"></p>
     </body>
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-    <script src="/jquery.color-2.1.2.min.js"></script>
-    <script src="/scripts.js"></script>
 </html>

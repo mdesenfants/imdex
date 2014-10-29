@@ -102,35 +102,28 @@ input[type="button"] {
     opacity: .8;
 }
 
-.imgBox {
+a.imageLink {
     height: 15em;
     width: 15em;
     display: inline-block;
     padding: 0;
     overflow: hidden;
     text-align: center;
+    vertical-align: middle;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-color: #EEBF82;
+
+}
+
+a.page {
+    display: block;
+    padding-top: 1em;
+    padding-bottom: 1em;
 }
 
 div.animated {
     border-top: dotted #EBAD60 .3em;
     border-left: dotted #EBAD60 .3em;
-}
-
-img {
-    position: relative;
-    left: 100%;
-    margin-left: -200%;
-}
-
-.loading {
-  width: 0;
-  margin: 0;
-  padding: 0;
-  margin: 0;
-  display: none;
-}
-
-a.container {
-  margin: 0;
-  padding: 0;
 }

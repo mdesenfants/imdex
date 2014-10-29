@@ -74,13 +74,6 @@ var upgrader = websocket.Upgrader{
 func main() {
 	m := martini.Classic()
 
-	m.Use(render.Renderer(render.Options{
-		Extensions: []string{".html"},
-	}))
-
-	m.Use(martini.Static("js"))
-	m.Use(martini.Static("images"))
-
 	m.Get("/find/stream", func(w http.ResponseWriter, r *http.Request) {
 
 		conn, err := upgrader.Upgrade(w, r, nil)
@@ -115,12 +108,12 @@ func main() {
 		r.JSON(200, *result)
 	})
 
-	m.Get("/:name", func(r render.Render, p martini.Params) {
-		r.HTML(200, "index", "reddit user name")
+	m.Get("/:name", func(res http.ResponseWriter, req *http.Request) {
+		http.ServeFile(res, req, "./templates/index.html")
 	})
 
-	m.Get("/", func(r render.Render) {
-		r.HTML(200, "index", "reddit user name")
+	m.Get("/", func(res http.ResponseWriter, req *http.Request) {
+		http.ServeFile(res, req, "./templates/index.html")
 	})
 
 	m.Run()
