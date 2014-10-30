@@ -85,6 +85,11 @@ input[type="button"] {
     text-align: middle;
 }
 
+.resultBox.animated {
+    border-top: solid #EA8A16 .4em;
+    border-left: solid #EA8A16 .4em; 
+}
+
 .resultBox.nsfw {
     background-image: url(/nsfw.gif);
 }
@@ -140,7 +145,7 @@ ul.menu {
     box-sizing: border-box;
 }
 
-ul * {
+ul a {
     color: white;
     font-weight: bold;
     text-decoration: none;
@@ -155,4 +160,10 @@ ul.menu li {
     display: inline-block;
     margin-left: 2px;
     margin-right: 2px;
+}
+
+div.playpause {
+    display: inline-block;
+    width: 2em;
+    color: white;
 }

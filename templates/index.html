@@ -21,11 +21,11 @@
         <p class="progress" data-ng-show="searching">Loading...</p>
         <p class="progress" data-ng-show="images.length > 0">{{images.length}} image{{images.length != 1 ? 's' : ''}}</p>
         <div class="output">
-            <div class="resultBox" data-ng-repeat="image in images | limitTo:max" data-ng-controller="image">
+            <div class="resultBox {{ image.animated != '' ? 'animated' : ''}}" data-ng-repeat="image in images | limitTo:max" data-ng-controller="image">
                 <ul class="menu" data-ng-show="showMenu" data-ng-mouseover="showMenu=true" data-ng-mouseout="showMenu=false">
                     <li>
                         <a href="" data-ng-show="image.animated && image.animated != ''" data-ng-click="setNewImage()">
-                        [{{ animated ? '&#9632;' : '&#9654;' }}]
+                        [<div class="playpause">{{ animated ? '&#9632;' : '&#9654;' }}</div>]
                         </a>
                     </li>
                     <li><a target="_blank" href="{{image.context}}">[reddit]</a></li>
@@ -36,7 +36,7 @@
                 data-ng-mouseover="showMenu=true"
                 data-ng-mouseout="showMenu=false"
                 target="_blank"
-                style="background-image: url({{!(image.nsfw && hidensfw) ? activeImage : '/nsfw.gif'}});"></a>
+                style="background-image: url({{!(image.nsfw && hidensfw) ? activeImage : '/nsfw.png'}});"></a>
             </div>
             <a href="" class="page" data-ng-click="max=max+30" data-ng-show="max < images.length">Show More</a>
         </div>
