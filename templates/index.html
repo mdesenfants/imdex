@@ -17,12 +17,26 @@
         <form data-ng-submit="get(search)">
             <h1>imgwaffle</h1><input type="text" data-ng-model="search" data-ng-trim="true" data-ng-blur="get(search)"/>
         </form>
-        <input type="checkbox" ng-model="hidensfw">Hide NSFW</input>
-        <p class="progress" data-ng-show="images.length == 0 && search.length > 0">Loading...</p>
+        <input type="checkbox" data-ng-model="hidensfw">Hide NSFW</input>
+        <p class="progress" data-ng-show="searching">Loading...</p>
         <p class="progress" data-ng-show="images.length > 0">{{images.length}} image{{images.length != 1 ? 's' : ''}}</p>
         <div class="output">
-            <div class="resultBox" data-ng-repeat="image in images | limitTo:max">
-                <a class="imageLink" target="_blank" data-ng-href="{{ image.url }}" style="background-image: url({{!(image.nsfw && hidensfw) ? image.animated || image.thumbnail : '/nsfw.gif'}});"></a>
+            <div class="resultBox" data-ng-repeat="image in images | limitTo:max" data-ng-controller="image">
+                <ul class="menu" data-ng-show="showMenu" data-ng-mouseover="showMenu=true" data-ng-mouseout="showMenu=false">
+                    <li>
+                        <a href="" data-ng-show="image.animated && image.animated != ''" data-ng-click="setNewImage()">
+                        [{{ animated ? '&#9632;' : '&#9654;' }}]
+                        </a>
+                    </li>
+                    <li><a href="{{image.context}}">[reddit]</a></li>
+                    <li><a href="{{image.url}}">[imgur]</a></li>
+                </ul>
+                <a class="imageLink"
+                data-ng-click="showMenu = !showMenu"
+                data-ng-mouseover="showMenu=true"
+                data-ng-mouseout="showMenu=false"
+                target="_blank"
+                style="background-image: url({{!(image.nsfw && hidensfw) ? activeImage : '/nsfw.gif'}});"></a>
             </div>
             <a href="" class="page" data-ng-click="max=max+30" data-ng-show="max < images.length">Show More</a>
         </div>

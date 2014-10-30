@@ -126,3 +126,33 @@ div.animated {
     border-top: dotted #EBAD60 .3em;
     border-left: dotted #EBAD60 .3em;
 }
+
+ul.menu {
+    list-style-type: none;
+    width: 100%;
+    position: absolute;
+    bottom: 0px;
+    vertical-align: middle;
+    background-color: black;
+    opacity: .7;
+    padding-top: .5em;
+    padding-bottom: .5em;
+    box-sizing: border-box;
+}
+
+ul * {
+    color: white;
+    font-weight: bold;
+    text-decoration: none;
+    opacity: 1;
+}
+
+ul img {
+    width: 90%;
+}
+
+ul.menu li {
+    display: inline-block;
+    margin-left: 2px;
+    margin-right: 2px;
+}

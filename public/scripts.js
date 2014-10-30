@@ -46,13 +46,26 @@ angular.module('imgwaffle', [])
 	$locationProvider.html5Mode(true);
 })
 
+.controller('image', ['$scope', function($scope) {
+	$scope.showMenu = false;
+	$scope.animated = false;
+	$scope.activeImage = $scope.image.thumbnail;
+
+	$scope.setNewImage = function() {
+		$scope.animated = !$scope.animated;
+		$scope.activeImage = $scope.animated ? $scope.image.animated : $scope.image.thumbnail;
+	};
+}])
+
 .controller('imageList', ['$scope', '$location', 'ImageService', function($scope, $location, ImageService){
 	$scope.images = [];
 	$scope.hidensfw = true;
 	$scope.max = 30;
 	$scope.lastSearch = '';
+	$scope.searching = false;
 
 	ImageService.subscribe(function(message) {
+		$scope.searching = false;
 		$scope.images.push(message);
 		$scope.$apply();
 	});
@@ -66,6 +79,7 @@ angular.module('imgwaffle', [])
 
 			ImageService.send(message);
 			$scope.lastSearch = message;
+			$scope.searching = true;
 		}
 	};
 
