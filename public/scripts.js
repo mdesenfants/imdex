@@ -96,7 +96,7 @@ angular.module('imgwaffle', [])
 	var boxesPerRow = Math.floor($(window).width() / boxSize) - 1;
 
 	$scope.images = [];
-	$scope.hidensfw = CookieService.get('hidensfw') == 'true';
+	$scope.hidensfw = CookieService.get('hidensfw') != 'false';
 	$scope.max = boxesPerRow * 3;
 	$scope.lastSearch = '';
 	$scope.searching = false;
