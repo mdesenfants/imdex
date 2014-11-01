@@ -86,8 +86,8 @@ input[type="button"] {
 }
 
 .resultBox.animated {
-    border-top: solid #EA8A16 .4em;
-    border-left: solid #EA8A16 .4em; 
+    border-top: solid #C66D00 .4em;
+    border-left: solid #C66D00 .4em;
 }
 
 .resultBox.nsfw {
@@ -127,11 +127,6 @@ a.page {
     padding-top: 1em;
 }
 
-div.animated {
-    border-top: dotted #EBAD60 .3em;
-    border-left: dotted #EBAD60 .3em;
-}
-
 ul.menu {
     list-style-type: none;
     width: 100%;
@@ -139,14 +134,14 @@ ul.menu {
     bottom: 0px;
     vertical-align: middle;
     background-color: black;
-    opacity: .7;
+    opacity: .9;
     padding-top: .5em;
     padding-bottom: .5em;
     box-sizing: border-box;
 }
 
 ul a {
-    color: white;
+    color: #B8C2FF;
     font-weight: bold;
     text-decoration: none;
     opacity: 1;
@@ -165,5 +160,7 @@ ul.menu li {
 div.playpause {
     display: inline-block;
     width: 2em;
-    color: white;
+    background-color: #B8C2FF;
+    color: black;
+    vertical-align: middle;
 }

@@ -37,7 +37,6 @@ function getImageService() {
 	return service;
 }
 
-
 angular.module('imgwaffle', [])
 
 .factory('ImageService', getImageService)
@@ -58,9 +57,13 @@ angular.module('imgwaffle', [])
 }])
 
 .controller('imageList', ['$scope', '$location', 'ImageService', function($scope, $location, ImageService){
+	var emSize = parseFloat(getComputedStyle(document.getElementsByTagName("body")[0], null)["font-size"]);
+	var boxSize = (15 * emSize) + (emSize * 1.4);
+	var boxesPerRow = Math.floor($(window).width() / boxSize) - 1;
+
 	$scope.images = [];
 	$scope.hidensfw = true;
-	$scope.max = 30;
+	$scope.max = boxesPerRow * 3;
 	$scope.lastSearch = '';
 	$scope.searching = false;
 
@@ -101,4 +104,11 @@ angular.module('imgwaffle', [])
 	if ($scope.search != '') {
 		$scope.get($scope.search);
 	}
+
+	$(window).scroll(function() {
+		if ($scope.max < $scope.images.length && $(window).scrollTop() + $(window).height() == $(document).height()) {
+			$scope.max += boxesPerRow * 2;
+			$scope.$apply();
+		}
+	});
 }]);
