@@ -107,6 +107,7 @@ angular.module('imgwaffle', [])
 		$scope.$apply();
 	}, function() {
 		$scope.searching = false;
+		$scope.$apply();
 	});
 
 	$scope.get = function(message) {
@@ -114,6 +115,7 @@ angular.module('imgwaffle', [])
 		{
 			$scope.max = 30;
 			$scope.images = [];
+			$scope.searching = true;
 			$location.path('/'+message);
 
 			ImageService.send(message);
