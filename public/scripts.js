@@ -19,20 +19,52 @@ function getImageService() {
 			};
 
 			socket.onerror = function(event) {
-				return;
+				service.doneCallback();
 			}
 
 			socket.onclose = function(event) {
 				service.ws = null;
+				service.doneCallback();
 			}
 
 			service.ws = socket;
 		}
 	}
 
-	service.subscribe = function(callback) {
+	service.subscribe = function(callback, doneCallback) {
 		service.callback = callback;
+		service.doneCallback = doneCallback;
 	}
+
+	return service;
+}
+
+function getCookieService() {
+	var service = {};
+
+	service.get = function(key) {
+		var cookie = ";"+document.cookie;
+		var values = cookie.split(";");
+
+		for (var i = 0; i < values.length; i++) {
+			var pair = values[i].split("=");
+
+			if (pair[0].trim() == key.trim()) {
+				return pair[1].trim();
+			}
+		}
+
+		return '';
+	};
+
+	service.put = function(key, value, date) {
+		if (date == null) {
+			var date = new Date();
+			date.setTime(date.getTime() + 30*24*60*60*1000);
+		}
+
+		document.cookie = key + "=" + value + "; expires=" + date.toGMTString();
+	};
 
 	return service;
 }
@@ -40,6 +72,8 @@ function getImageService() {
 angular.module('imgwaffle', [])
 
 .factory('ImageService', getImageService)
+
+.factory('CookieService', getCookieService)
 
 .config(function($locationProvider) {
 	$locationProvider.html5Mode(true);
@@ -56,13 +90,13 @@ angular.module('imgwaffle', [])
 	};
 }])
 
-.controller('imageList', ['$scope', '$location', 'ImageService', function($scope, $location, ImageService){
+.controller('imageList', ['$scope', '$location', 'ImageService', 'CookieService', function($scope, $location, ImageService, CookieService){
 	var emSize = parseFloat(getComputedStyle(document.getElementsByTagName("body")[0], null)["font-size"]);
 	var boxSize = (15 * emSize) + (emSize * 1.4);
 	var boxesPerRow = Math.floor($(window).width() / boxSize) - 1;
 
 	$scope.images = [];
-	$scope.hidensfw = true;
+	$scope.hidensfw = CookieService.get('hidensfw') == 'true';
 	$scope.max = boxesPerRow * 3;
 	$scope.lastSearch = '';
 	$scope.searching = false;
@@ -71,10 +105,12 @@ angular.module('imgwaffle', [])
 		$scope.searching = false;
 		$scope.images.push(message);
 		$scope.$apply();
+	}, function() {
+		$scope.searching = false;
 	});
 
 	$scope.get = function(message) {
-		if (message != $scope.lastSearch)
+		if (message != $scope.lastSearch || message == '')
 		{
 			$scope.max = 30;
 			$scope.images = [];
@@ -82,7 +118,6 @@ angular.module('imgwaffle', [])
 
 			ImageService.send(message);
 			$scope.lastSearch = message;
-			$scope.searching = true;
 		}
 	};
 
@@ -100,10 +135,13 @@ angular.module('imgwaffle', [])
 		$scope.get($scope.search);
 	});
 
+	$scope.$watch(function() { return $scope.hidensfw }, function(val) {
+		CookieService.put('hidensfw', val.toString(), null);
+	});
+
+
 	$scope.search = $scope.getSearch();
-	if ($scope.search != '') {
-		$scope.get($scope.search);
-	}
+	$scope.get($scope.search);
 
 	$(window).scroll(function() {
 		if ($scope.max < $scope.images.length && $(window).scrollTop() + $(window).height() == $(document).height()) {

@@ -1,11 +1,14 @@
 <!DOCTYPE html>
-<html data-ng-app="imgwaffle">
+<html data-ng-app="imgwaffle" data-ng-controller="imageList">
     <head>
         <base href="/" />
-        <title>imgwaffle</title>
+        <title>{{search && search != '' ? search + ' | ' : ''}}imgwaffle</title>
+        
         <link rel="icon" type="image/png" href="/favicon.png" />
         <link rel="stylesheet" type="text/css" href="/styles.css" />
+
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="View images postedy by your favorite redditors.">
 
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
         <script src="/jquery.color-2.1.2.min.js"></script>
@@ -13,7 +16,7 @@
         <script src="/scripts.js"></script>
     </head>
 
-    <body data-ng-controller="imageList">
+    <body>
         <form data-ng-submit="get(search)">
             <h1>imgwaffle</h1><input type="text" data-ng-model="search" data-ng-trim="true" data-ng-blur="get(search)"/>
         </form>

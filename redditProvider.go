@@ -46,6 +46,10 @@ type Field struct {
 }
 
 func getChildren(user string) <-chan Child {
+	if user == "" {
+		user = "random"
+	}
+
 	output := make(chan Child)
 
 	urls := []string{
@@ -65,7 +69,7 @@ func getChildren(user string) <-chan Child {
 				req, err := http.NewRequest("GET", address, nil)
 				req.Header.Add("User-Agent", "imgwaffle/1.0 by bottombutton")
 
-				getToken()
+				<-tokens
 				list, err := client.Do(req)
 
 				if err != nil {
@@ -141,15 +145,11 @@ func startTokens() {
 	// Add a new token ever 2 seconds per reddit api guidelines
 	go func() {
 		for {
-			timer := time.NewTimer(time.Second * 2)
+			timer := time.NewTimer(time.Second * 5)
 			<-timer.C
 			tokens <- true
 		}
 	}()
-}
-
-func getToken() {
-	<-tokens
 }
 
 var once sync.Once
