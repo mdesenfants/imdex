@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html data-ng-app="imgwaffle" data-ng-controller="imageList">
+<html  xmlns:ng="http://angularjs.org" data-ng-app="imgwaffle" data-ng-controller="imageList">
     <head>
         <base href="/" />
         <title>{{search && search != '' ? search + ' | ' : ''}}imgwaffle</title>
-        
+
         <link rel="icon" type="image/png" href="/favicon.png" />
         <link rel="stylesheet" type="text/css" href="/styles.css" />
 
@@ -39,7 +39,7 @@
                 data-ng-mouseover="showMenu=true"
                 data-ng-mouseout="showMenu=false"
                 target="_blank"
-                style="background-image: url({{!(image.nsfw && hidensfw) ? activeImage : '/nsfw.png'}});"></a>
+                data-ng-style="{'background-image': 'url({{activeImage}})'}"></a>
             </div>
             <a href="" class="page" data-ng-click="max=max+30" data-ng-show="max < images.length">Show More</a>
         </div>

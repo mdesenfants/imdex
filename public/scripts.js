@@ -86,12 +86,13 @@ angular.module('imgwaffle', [])
 
 	$scope.setNewImage = function() {
 		$scope.animated = !$scope.animated;
-		$scope.activeImage = $scope.animated ? $scope.image.animated : $scope.image.thumbnail;
+		var newImage = $scope.animated ? $scope.image.animated : $scope.image.thumbnail;
+		$scope.activeImage = !(image.nsfw && hidensfw) ? newImage : '/nsfw.png';
 	};
 }])
 
 .controller('imageList', ['$scope', '$location', 'ImageService', 'CookieService', function($scope, $location, ImageService, CookieService){
-	var emSize = parseFloat(getComputedStyle(document.getElementsByTagName("body")[0], null)["font-size"]);
+	var emSize = parseFloat(getComputedStyle(document.getElementsByTagName("body")[0], null).getPropertyValue("font-size"));
 	var boxSize = (15 * emSize) + (emSize * 1.4);
 	var boxesPerRow = Math.floor($(window).width() / boxSize) - 1;
 
