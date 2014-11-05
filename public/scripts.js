@@ -79,6 +79,16 @@ angular.module('imgwaffle', [])
 	$locationProvider.html5Mode(true);
 })
 
+.directive('backImg', function(){
+    return function(scope, element, attrs){
+        attrs.$observe('backImg', function(value) {
+            element.css({
+                'background-image': 'url(' + value +')'
+            });
+        });
+    };
+})
+
 .controller('image', ['$scope', function($scope) {
 	$scope.showMenu = false;
 	$scope.animated = false;
@@ -87,7 +97,7 @@ angular.module('imgwaffle', [])
 	$scope.setNewImage = function() {
 		$scope.animated = !$scope.animated;
 		var newImage = $scope.animated ? $scope.image.animated : $scope.image.thumbnail;
-		$scope.activeImage = !(image.nsfw && hidensfw) ? newImage : '/nsfw.png';
+		$scope.activeImage = !($scope.image.nsfw && $scope.hidensfw) ? newImage : '/nsfw.png';
 	};
 }])
 
